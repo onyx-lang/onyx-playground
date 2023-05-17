@@ -169,6 +169,10 @@ select:hover {
     height: 100%;
 }
 
+.floating-container:has(#render-target.highlight) {
+    border: 1px solid #7fab44;
+}
+
 #code-result {
     height: 100%;
     border-radius: var(--box-padding);
@@ -210,7 +214,7 @@ select:hover {
     bottom: calc(2 * var(--box-padding));
     left: 2%;
 
-    border: 1px solid black;
+    border: 1px solid #7fab44;
     border-radius: var(--box-padding);
 
     padding: 4px;
@@ -226,6 +230,12 @@ select:hover {
 
     font-size: 16px;
     font-family: fira, "mononoki Nerd Font Mono", "mononoki NF", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+
+    transition: transform 0.3s ease-in-out;
+}
+
+#input-bar.hide {
+    transform: translateY(100px);
 }
 
 .jquery-modal.blocker.current {

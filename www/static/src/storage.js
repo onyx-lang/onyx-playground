@@ -63,6 +63,7 @@ function load_from_local_storage_with_name(filename) {
     let maybe_code = localStorage.getItem("saved_" + filename);
     if (maybe_code != null) {
         editor.setValue(maybe_code);
+        editor.clearSelection();
     }
 
     $.modal.close();
@@ -71,6 +72,30 @@ function load_from_local_storage_with_name(filename) {
 function delete_from_local_storage_with_name(filename, cb) {
     localStorage.removeItem(`saved_${filename}`);
     refresh_file_lists(cb);
+}
+
+function quick_save() {
+    let editor = ace.edit('code-editor');
+    let code = editor.getValue();
+
+    localStorage.setItem("quicksave", code);
+}
+
+function quick_load() {
+    let editor = ace.edit('code-editor');
+
+    let maybe_code = localStorage.getItem("quicksave");
+    if (maybe_code != null) {
+        editor.setValue(maybe_code);
+        editor.clearSelection();
+    } else {
+        editor.setValue(`use core {*}
+
+main :: () {
+    println("Hello, Onyx!");
+}`);
+        editor.clearSelection();
+    }
 }
 
 function prompt_download() {
@@ -108,5 +133,6 @@ function file_uploaded(ev) {
         let code = readerEvent.target.result;
         let editor = ace.edit('code-editor');
         editor.setValue(code);
+        editor.clearSelection();
     }
 }

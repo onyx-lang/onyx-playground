@@ -1,9 +1,11 @@
 package builtin
 
+use core
+
 read_line :: () -> str {
     #persist buffer: [1024] u8;
 
-    (package core).__flush_stdio();
+    core.__flush_stdio();
     
     read_line_available :: () -> bool #foreign "host" "read_line_available" ---
     read_line           :: (buffer: [] u8) -> u32 #foreign "host" "read_line" ---

@@ -54,6 +54,17 @@ async function run_wasm(wasm_bytes) {
 
             case 'canvas': {
                 canvas_handler(e.data.data);
+                break;
+            }
+
+            case 'show_input': {
+                show_input();
+                break;
+            }
+
+            case 'highlight_canvas': {
+                canvas_highlight();
+                break;
             }
         }
     };
@@ -71,6 +82,7 @@ async function submit_code() {
     if (wasm_worker != null) return;
 
     clear_output();
+    quick_save();
     let editor = ace.edit('code-editor');
     let code = editor.getValue();
 
@@ -240,9 +252,13 @@ function handle_dragover(e) {
     return false;
 }
 
+function show_input() {
+    $("#input-bar").removeClass("hide");
+}
+
 function submit_input() {
-    let inputbar = document.getElementById("input-bar");
-    let input = inputbar.value;
+    let $inputbar = $("#input-bar");
+    let input = $inputbar.val();
 
     write_output(input + "\n", false);
 
@@ -256,7 +272,9 @@ function submit_input() {
     let atomic_array = new Int32Array(input_shared_buffer);
     Atomics.store(atomic_array, 0, 1);
     Atomics.notify(atomic_array, 0);
-    inputbar.value = "";
+
+    $inputbar.val("");
+    $inputbar.addClass("hide");
 }
 
 function populate_examples() {
@@ -339,6 +357,8 @@ window.onload = () => {
 
     populate_examples();
     load_settings();
+    quick_load();
+    setInterval(quick_save, 2 * 60 * 1000); // Quick save every five minutes
 
     make_resizer("main-horizontal-divider", "--folder-width", "", (e) => {
         save_split_sizes();

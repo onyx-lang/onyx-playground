@@ -36,6 +36,8 @@ function canvas_register_handlers() {
         Atomics.store(canvas_data, 4, my);
         Atomics.store(canvas_data, 5, 1);
         Atomics.notify(canvas_data, 5);
+
+        $(canvas_element).removeClass("highlight");
     });
 
     canvas_handlers_registered = true;
@@ -54,6 +56,10 @@ function update_canvas_data() {
     Atomics.store(canvas_data, 1, box.height);
     Atomics.store(canvas_data, 2, 1);
     Atomics.notify(canvas_data, 2);
+}
+
+function canvas_highlight() {
+    $(canvas_element).addClass("highlight");
 }
 
 function canvas_buffer_flush() {

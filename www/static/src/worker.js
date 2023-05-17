@@ -25,6 +25,8 @@ let import_obj = {
         },
 
         read_line_available: function() {
+            self.postMessage({ type: 'show_input', data: null });
+
             let input_array = new Int32Array(input_shared_buffer);
             Atomics.store(input_array, 0, 0);
             Atomics.wait(input_array, 0, 0);
@@ -182,6 +184,8 @@ let import_obj = {
         mouse_get_click(outx, outy) {
             let data = new DataView(wasm_memory.buffer);
             let canvas_data = new Int32Array(canvas_data_buffer);
+
+            self.postMessage({ type: "highlight_canvas", data: null });
 
             Atomics.wait(canvas_data, 5, 0);
             Atomics.store(canvas_data, 5, 0);
