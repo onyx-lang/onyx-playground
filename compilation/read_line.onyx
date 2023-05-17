@@ -1,0 +1,16 @@
+package builtin
+
+read_line :: () -> str {
+    #persist buffer: [1024] u8;
+
+    (package core).__flush_stdio();
+    
+    read_line_available :: () -> bool #foreign "host" "read_line_available" ---
+    read_line           :: (buffer: [] u8) -> u32 #foreign "host" "read_line" ---
+    
+    read_line_available();
+    length := read_line(~~buffer);
+    
+    return str.{ ~~buffer, length };
+}
+

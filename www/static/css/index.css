@@ -1,0 +1,367 @@
+:root {
+    --menu-bar-height: 32px;
+    --input-bar-height: 48px;
+    --divider-size: 4px;
+    --left-half-width: 70%;
+    --top-half-height: 30%;
+    --folder-width: 10%;
+    --tab-line-height: 24px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.ui-dark-theme {
+    --terminal-background-color: #070707;
+    --terminal-foreground-color: #ffffff;
+
+    --background-color: #111;
+    --light-background-color: #222;
+    --active-color: #444;
+    --foreground-color: #fff;
+}
+
+.ui-light-theme {
+    --terminal-background-color: #dddddd;
+    --terminal-foreground-color: #000000;
+
+    --background-color: #f0f0f0;
+    --light-background-color: #e0e0e0;
+    --active-color: #cccccc;
+    --foreground-color: #000000;
+}
+
+.ui-blue-theme {
+    --terminal-background-color: #112233;
+    --terminal-foreground-color: #ffffff;
+    --background-color: #070723;
+    --light-background-color: #101046;
+    --active-color: #7777aa;
+    --foreground-color: #fff;
+}
+
+body {
+    background: var(--background-color);
+    color: var(--foreground-color);
+    
+    overflow: hidden;
+    font-family: fira, "mononoki Nerd Font Mono", "mononoki NF", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+}
+
+select {
+    margin: calc((var(--menu-bar-height) - 24px) / 2);
+    height: 24px;
+    min-width: 64px;
+
+    border: none;
+    color: var(--foreground-color);
+    background: var(--light-background-color);
+
+    /* border-radius: 6px; */
+
+    transition: all 0.5s;
+}
+
+select:hover {
+    background: var(--active-color);
+    cursor: pointer;
+}
+
+.menu-bar button, .menu-bar a {
+    margin: calc((var(--menu-bar-height) - 24px) / 2);
+    height: 24px;
+    min-width: 64px;
+
+    border: none;
+    background: var(--background-color);
+    color: var(--foreground-color);
+
+    transition: all 0.5s;
+}
+
+.menu-bar button, .menu-bar a {
+    min-width: 24px;
+    border-radius: 50%;
+}
+
+.menu-bar button:hover, .menu-bar a:hover {
+    background: var(--active-color);
+    cursor: pointer;
+}
+
+.menu-bar a[title="Settings"] {
+    float: right;
+    color: var(--foreground-color);
+    padding-top: 4px;
+}
+
+#folder-view {
+    width: calc(var(--folder-width) - var(--divider-size));
+    float: left;
+}
+
+#code-container {
+    width: calc(100% - var(--folder-width));
+    float: left;
+}
+
+.left-half, .right-half {
+    height: calc(100vh - var(--menu-bar-height));
+    float: left;
+    display: inline-block;
+}
+
+.left-half {
+    width: var(--left-half-width);
+}
+
+.right-half {
+    width: calc(100% - var(--left-half-width) - var(--divider-size));
+}
+
+.top-half, .bottom-half {
+    width: 100vw;
+    float: left;
+    display: inline-block;
+}
+
+.menu-bar {
+    min-height: var(--menu-bar-height);
+}
+
+#code-editor {
+    height: calc(100% - var(--tab-line-height));
+}
+
+#code-result {
+    height: 100vh;
+    max-height: calc(100vh - var(--menu-bar-height) - var(--input-bar-height) - var(--top-half-height) - var(--divider-size) - var(--tab-line-height));  /* subtract the padding */
+
+    background: var(--terminal-background-color); 
+    color: var(--terminal-foreground-color);
+
+    font-size: 16px;
+    font-family: fira, "mononoki Nerd Font Mono", "mononoki NF", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+
+    overflow-y: auto;
+    overflow-x: auto;
+
+    padding: 12px;
+}
+
+#code-result.errored {
+    color: #f55;
+}
+
+#code-horizontal-divider, #main-horizontal-divider {
+    min-width: var(--divider-size);
+    height: calc(100vh - var(--menu-bar-height));
+    background-color: #777;
+    cursor: col-resize;
+
+    display: inline-block;
+    float: left;
+    z-index: 1000;
+}
+
+#vertical-divider {
+    width: 100%;
+    height: var(--divider-size);
+    background-color: #777;
+    cursor: row-resize;
+
+    display: inline-block;
+    float: left;
+}
+
+#input-bar {
+    background-color: var(--background-color);
+    color: var(--foreground-color);
+    outline: none;
+    border: none;
+
+    min-height: var(--input-bar-height);
+    width: 100%;
+    padding: 8px;
+    float: left;
+
+    font-size: 16px;
+    font-family: fira, "mononoki Nerd Font Mono", "mononoki NF", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+}
+
+#render-target {
+    width: 100%;
+    height: calc(var(--top-half-height) - var(--tab-line-height));
+}
+
+.jquery-modal.blocker.current {
+    z-index: 100 !important;
+}
+
+.modal {
+    z-index: 200 !important;
+
+    background: var(--background-color) !important;
+    color: var(--foreground-color) !important;
+}
+
+.modal input {
+    background-color: var(--light-background-color);
+    color: var(--foreground-color);
+    outline: none;
+    border: none;
+
+    min-height: var(--input-bar-height);
+    width: 100%;
+    padding: 8px;
+    float: left;
+
+    font-size: 16px;
+    font-family: fira, "mononoki Nerd Font Mono", "mononoki NF", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace;
+}
+
+.modal button {
+    margin: 8px 0;
+    height: 24px;
+    min-width: 64px;
+
+    border: none;
+    color: var(--foreground-color);
+    background: var(--light-background-color);
+
+    transition: all 0.5s;
+}
+
+.modal button:hover {
+    background: var(--active-background-color);
+    cursor: pointer;
+}
+
+.modal button:disabled {
+    background: var(--dark-background-color);
+    cursor: not-allowed;
+}
+
+.modal .file-list {
+    max-height: 400px;
+    overflow: auto;
+}
+
+.modal .file-list button {
+    display: block;
+    width: 100%;
+}
+
+.modal .file-list .file-select {
+    float: left;
+    width: 85%;
+}
+
+.modal .file-list .file-delete {
+    float: left;
+    width: 15%;
+
+    background: #802424;
+}
+
+.modal .file-list .file-delete:hover {
+    background: #a04444;
+}
+
+.modal {
+    border-radius: 0 !important;
+    -webkit-border-radius: 0 !important;
+}
+
+@font-face {
+    font-family: fira;
+    src: url(../FiraCode-Regular.woff);
+}
+
+.ace_editor {
+    /* font-family: "mononoki Nerd Font Mono", "mononoki NF", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace !important; */
+    font-family: fira, monospace !important;
+}
+
+.tab-line {
+    background: var(--light-background-color);
+    border-bottom: 2px solid var(--dark-background-color);
+    cursor: default;
+    user-select: none;
+    line-height: calc(var(--tab-line-height) + 2px);
+}
+
+.tab-line span {
+    background: var(--active-color);
+    /* border-radius: 8px 8px 0 0; */
+    /* margin-left: 8px; */
+    padding: 4px 6px;
+    height: 100%;
+    /* line-height: var(--tab-line-height); */
+}
+
+::-webkit-scrollbar {
+    width: 0.75em;
+}
+
+::-webkit-scrollbar-track {
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--active-color);
+    outline: 1px solid var(--background-color);
+}
+
+.folder-item {
+    user-select: none;
+    position: relative;
+    cursor: pointer;
+    transition: all 200ms;
+    padding-left: 4px;
+}
+
+.folder-item.file.active {
+    background-color: var(--light-background-color);
+}
+
+.folder-item:not(.active):hover {
+    background-color: var(--active-color);
+}
+
+.folder-item > .folder-item-button {
+    opacity: 0;
+    float: right;
+    transition: all 200ms;
+}
+
+.folder-item:hover > .folder-item-button {
+    opacity: 1;
+}
+
+.folder {
+    position: relative;
+    left: 32px;
+    width: calc(100% - 32px);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.folder-root {
+    left: 0px !important;
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: 100%;
+    max-height: calc(100vh - var(--menu-bar-height) * 2 - var(--tab-line-height) - 12px);  /* subtract the padding */
+}
+
+.folder-root > .folder-item {
+    border-left: none !important;
+}
+
+.hidden {
+    display: none !important;
+}

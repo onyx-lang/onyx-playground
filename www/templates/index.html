@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Onyx compiler</title> 
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="theme-color" content="#111111"/>
+
+        <link rel="manifest" href="{% $endpoint %}/manifest.json">
+
+        <link rel="stylesheet" href="{% $endpoint %}/static/css/index.css" />
+        <link rel="stylesheet" href="{% $endpoint %}/static/vendor/fontawesome/css/all.min.css" />
+        <link rel="stylesheet" href="{% $endpoint %}/static/vendor/fontawesome/css/v4-shims.min.css" />
+        <link rel="stylesheet" href="{% $endpoint %}/static/vendor/jquery/jquery.modal.min.css" />
+
+        <script> window.ROOT_ENDPOINT = "{% $endpoint %}" </script>
+        <script defer src="{% $endpoint %}/static/src/resizer.js"></script>
+        <script defer src="{% $endpoint %}/static/src/storage.js"></script>
+        <script defer src="{% $endpoint %}/static/src/canvas.js"></script>
+        <script defer src="{% $endpoint %}/static/src/folders.js"></script>
+        <script defer src="{% $endpoint %}/static/vendor/ace/ace.js"></script>
+        <script defer src="{% $endpoint %}/static/vendor/jquery/jquery.min.js"></script>
+        <script defer src="{% $endpoint %}/static/vendor/jquery/jquery.modal.min.js"></script>
+        <script src="{% $endpoint %}/static/src/index.js"></script>
+    </head>
+
+    <body id="body">
+        <div id="simple-menubar" class="menu-bar">
+            <button title="Run" class="run-button" onclick="submit_code()"><i class="fas fa-play"></i></button>
+            <button title="Stop" onclick="kill_code()"><i class="fas fa-stop"></i></button>
+            <button title="Save" onclick="prompt_save()"><i class="fas fa-save"></i></button>
+            <button title="Load" onclick="prompt_load()"><i class="fas fa-folder"></i></button>
+            <button title="Upload" onclick="prompt_upload()"><i class="fas fa-upload"></i></button>
+            <button title="Download" onclick="prompt_download()"><i class="fas fa-download"></i></button>
+            <a title="Settings" href="#settings-modal" rel="modal:open"><i class="fas fa fa-gears"></i></a>
+
+            <label style="margin-left: 64px" for="examples">Load example:</label>
+            <select name="examples" id="examples-selector" onchange="load_example()">
+                <option value="none">---</option>
+            </select>
+        </div>
+        
+        <div id="ide-menubar" class="menu-bar hidden">
+            <div style="text-align: center; float: left; width: 100%">
+                <button title="Run" class="run-button" onclick="submit_code()"><i class="fas fa-play"></i></button>
+                <button title="Stop" onclick="kill_code()"><i class="fas fa-stop"></i></button>
+                <a title="Settings" href="#settings-modal" rel="modal:open"><i class="fas fa fa-gears"></i></a>
+            </div>
+        </div>
+        
+        <div id="folder-view" class="hidden">
+            <div class="tab-line"><span>Storage</span></div>
+            <div class="menu-bar" style="border-bottom: 2px solid var(--light-background-color); margin-bottom: 12px">
+                <div style="text-align: center">
+                    <button title="New File" onclick="folder_start_create_file()"><i class="fas fa-plus"></i></button>
+                    <button title="Save" onclick="folder_save_current_file()"><i class="fas fa-save"></i></button>
+                    <button title="Upload" onclick="prompt_upload()"><i class="fas fa-upload"></i></button>
+                    <button title="Download" onclick="prompt_download()"><i class="fas fa-download"></i></button>
+                </div>
+            </div>
+
+            <div class="folder-root">
+            </div>
+        </div>
+
+        <div id="main-horizontal-divider" class="divider hidden"></div>
+
+        <div id="code-container">
+            <div class="left-half">
+                <div class="tab-line"><span>Code</span></div>
+                <pre id="code-editor" ondragover="handle_dragover(event);" ondrop="handle_drop(event);">{% $code_body %}</pre>
+            </div>
+
+            <div id="code-horizontal-divider" class="divider"></div>
+
+            <div class="right-half">
+                <div class="tab-line"><span>Canvas</span></div>
+                <canvas id="render-target"></canvas>
+
+                <div id="vertical-divider" class="divider"></div>
+
+                <div class="tab-line"><span>Output</span></div>
+                <pre id="code-result"></pre>
+                <input type="textbox" id="input-bar" placeholder="Input" />
+                <!--<input type="button" id="input-submit" value="Enter" onclick="submit_input()" /> -->
+            </div>
+        </div>
+
+        <input id="fileupload" style="display:none" type="file" onchange="file_uploaded(event)"/>
+
+        <div id="settings-modal" class="modal">
+            <h2>Settings</h2>
+
+            <label for="ui-theme">UI theme:</label>
+            <select aria-label="Theme" name="ui-theme" id="ui-theme" onchange="change_ui_theme()">
+                <option value="dark">Dark</option>
+                <option value="blue">Blue</option>
+                <option value="light">Light</option>
+            </select>
+
+            <br />
+
+            <label for="editor-theme">Editor theme:</label>
+            <select aria-label="Theme" name="editor-theme" id="code-editor-theme" onchange="change_editor_theme()">
+                <option value="ambiance">Ambiance</option>
+                <option value="chaos">Chaos</option>
+                <option value="chrome">Chrome</option>
+                <option value="clouds">Clouds</option>
+                <option value="eclipse">Eclipse</option>
+                <option value="github">Github</option>
+                <option value="gruvbox">Gruvbox</option>
+                <option selected value="monokai">Monokai</option>
+                <option value="nord-dark">Nord Dark</option>
+                <option value="one-dark">One Dark</option>
+                <option value="terminal">Terminal</option>
+                <option value="tomorrow">Tomorrow</option>
+                <option value="tomorrow-night-bright">Tomorrow Night Bright</option>
+            </select>
+
+            <br />
+
+            <label for="keybindings">Key bindings:</label>
+            <select aria-label="Keybindings" name="keybindings" id="code-editor-keybindings" onchange="change_keybindings()">
+                <option value="normal">Normal</option>
+                <option value="vim">Vim</option>
+                <option value="emacs">Emacs</option>
+                <option value="sublime">Sublime Text</option>
+                <option value="vscode">VS Code</option>
+            </select>
+
+            <br />
+
+            <label for="ui-mode">UI Mode:</label>
+            <select aria-label="UI Mode" name="ui-mode" id="ui-mode" onchange="change_ui_mode()">
+                <option value="simple">Simple</option>
+                <option value="ide">IDE</option>
+            </select>
+        </div>
+
+        <div id="save-modal" class="modal">
+            <h2>Save Online</h2>
+            <div>
+                <span style="margin: 8px 0;" id="permalink">Permalink not created.</span>
+                <button style="float: right; padding: 0 8px;" onclick="request_permalink()">Create permalink</button>
+            </div>
+
+            <br/>
+            <h2>Save Locally</h2>
+            <input type="text" id="save-filename" name="save-filename" placeholder="Name" />
+            <br/>
+            <button onclick="save_to_local_storage()">Save</button>
+
+            <div class="file-list"> </div>
+        </div>
+
+        <div id="load-modal" class="modal">
+            <h2>Load</h2>
+            <input type="text" id="load-filename" name="load-filename" placeholder="Name" />
+            <br/>
+            <button onclick="load_from_local_storage()">Load</button>
+
+            <div class="file-list"> </div>
+        </div>
+
+        <div id="create-file-modal" class="modal">
+            <h2>Create File</h2>
+            <input type="text" name="create-name" placeholder="Path" value="" />
+            <br/>
+            <button onclick="folder_finalize_create_file()">Create</button>
+        </div>
+
+        <div id="rename-modal" class="modal">
+            <h2>Rename</h2>
+            <input type="text" id="rename-name" name="rename-name" placeholder="Name" value="" />
+            <br/>
+            <button onclick="folder_finalize_rename()">Rename</button>
+        </div>
+
+        <div id="remove-modal" class="modal">
+            <h2>Remove</h2>
+            <p></p>
+            <br/>
+            <button onclick="folder_finalize_remove()">Remove</button>
+        </div>
+    </body>
+</html>

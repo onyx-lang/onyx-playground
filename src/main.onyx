@@ -1,0 +1,213 @@
+#load "lib/packages"
+
+use core {*}
+use http
+use http.server {Request, Response, route}
+use otmp
+
+ENDPOINT :: ""
+ONYX_SOURCE_FOLDER :: "/home/brendan/dev/onyx"
+
+template_registry: otmp.TemplateRegistry;
+
+@route.{.GET, "/"}
+index :: (req: &Request, res: &Response) {
+    template_registry->render_template("index", &res.writer, &.{
+        endpoint = ENDPOINT,
+        code_body = "",
+    });
+
+    res->status(200);
+    res->end();
+}
+
+@route.{.GET, "/list_examples"}
+list_examples :: (req: &Request, res: &Response) {
+    use core.encoding.json
+
+    example_folder := os.path_join(ONYX_SOURCE_FOLDER, "examples");
+    names := iter.comp(os.list_directory(example_folder), #(tprintf("{}", it->name())));
+    slice.sort(names, string.compare);
+    for& names do it.count -= 5;
+
+    res->json(names);
+    res->status(200);
+    res->end();
+}
+
+@route.{.GET, "/example"}
+load_example :: (req: &Request, res: &Response) {
+    example_name := req->query_param(str, "example");
+    if !example_name do return;
+
+    example_file_path := tprintf("{}/examples/{}.onyx", ONYX_SOURCE_FOLDER, example_name);
+
+    if os.is_file(example_file_path) {
+        contents := os.get_contents(example_file_path);
+        res->body("text/plain", contents);
+        res->status(200);
+    } else {
+        res->status(404);
+    }
+
+    res->end();
+}
+
+@route.{.POST, "/compile"}
+compile_onyx :: (req: &Request, res: &Response) {
+    body := req.body->json();
+    code := body.root["code"]->as_str();
+
+    for wasm_file: temp_file(".wasm") {
+        for code_file: temp_file(".onyx") {
+            for os.with_file(code_file, .Write) {
+                io.stream_write(it, code);
+            }
+            
+            compile_process := os.process_spawn(
+                "timeout", .[
+                    "-s", "KILL", "10s",
+                    "onyx", "build", "-r", "js",
+                    "--no-file-contents", "--no-colors",
+                    "-o", string.advance(wasm_file, "compilation/".count),
+                    string.advance(code_file, "compilation/".count),
+                    "./read_line.onyx", "./canvas.onyx",
+                ],
+                starting_directory="compilation"
+            );
+
+            compile_reader := io.reader_make(&compile_process);
+            compile_output := compile_reader->read_all();
+            
+            switch os.process_wait(&compile_process) {
+                case .Success {
+                    res->file(wasm_file);
+                    res->status(200);
+                }
+
+                case .Error {
+                    res->body("text/plain", compile_output);
+                    res->status(500);
+                }
+            }
+        }
+
+        res->end();
+    }
+}
+
+@route.{.GET, "/manifest.json"}
+manifest_json :: (req: &Request, res: &Response) {
+    Metadata :: struct {
+        short_name, name, start_url, background_color, display, scope,
+        theme_color, description: str;
+
+        shortcuts, screenshots: [] str;
+        icons: [] struct {
+            src, type, sizes: str;
+        };
+    }
+
+    res->json(Metadata.{
+        short_name = "Onyx Playground",
+        name = "Onyx Playground - Try Onyx without Installing",
+        icons = .[
+            .{
+                src = tprintf("{}/static/logo_256.png", ENDPOINT),
+                type = "image/png",
+                sizes = "256x256",
+            },
+            .{
+                src = tprintf("{}/static/logo_512.png", ENDPOINT),
+                type = "image/png",
+                sizes = "512x512",
+            },
+        ],
+
+        start_url = "/playground/?source=pwa",
+        background_color = "#111",
+        display = "standalone",
+        scope = "/playground",
+        theme_color = "#111",
+        shortcuts = str.[],
+        description = "Onyx Playground",
+        screenshots = str.[]
+    });
+
+    res->status(200);
+}
+
+@route.{.GET, "/core_libraries.json"}
+core_libraries_json :: (req: &Request, res: &Response) {
+    Elem :: struct { name, type, state, contents: str; elems: [] Elem }
+
+    build_dir :: (d: str) -> [] Elem {
+        out: [..] Elem;
+
+        for os.list_directory(d) {
+            full_path := os.path_join(d, it->name());
+            if os.is_file(full_path) {
+                out << .{ tprintf(it->name()), "file", contents = os.get_contents(full_path) };
+            }
+            if os.is_directory(full_path) {
+                out << .{ tprintf(it->name()), "dir", "closed", elems = build_dir(full_path) };
+            }
+        }
+
+        return out;
+    }
+
+    output := build_dir(tprintf("{}/core", ONYX_SOURCE_FOLDER));
+    res->json(output);
+    res->status(200);
+    res->end();
+}
+
+
+setup_server :: () -> http.server.Pipeline {
+    http.server.set_mime_type("wasm", "application/wasm");
+
+    router := http.server.router() |> alloc.on_heap();
+    router->collect_routes();
+
+    static := http.server.static(
+        aprintf("{}/static", ENDPOINT),
+        "www/static"
+    ) |> alloc.on_heap();
+
+    logger := http.server.logger() |> alloc.on_heap();
+
+    pipeline := http.server.pipeline();
+
+    pipeline->pipe((req, res) => {
+        res.headers->put("Cross-Origin-Embedder-Policy", "require-corp");
+        res.headers->put("Cross-Origin-Opener-Policy", "same-origin");
+        res.headers->put("Service-Worker-Allowed", "/");
+    });
+
+    pipeline->pipe(static);
+    pipeline->pipe(router);
+    pipeline->pipe(logger);
+
+    return pipeline;
+}
+
+setup_templates :: () {
+    template_registry = otmp.registry();
+    template_registry->load_directory("www/templates", "html");
+}
+
+main :: () {
+    setup_templates();
+
+    pipeline := setup_server();
+    tcp_server := http.server.tcp(pipeline);
+    tcp_server->serve(4000);
+}
+    
+temp_file :: (extension: str) => iter.single(
+    tprintf("compilation/{}{}", random.string(16, alpha_numeric=true), extension),
+    filename => {
+        os.remove_file(filename);
+    }
+);

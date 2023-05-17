@@ -1,0 +1,74 @@
+package canvas
+
+FillRule  :: enum { NonZero :: 1; EvenOdd :: 2; }
+TextAlign :: enum { Left :: 1; Right; Center; Start; End; }
+LineJoin  :: enum { Bevel :: 1; Round; Miter; }
+
+init  :: () -> void #foreign "canvas" "init" ---
+clear :: () -> void #foreign "canvas" "clear" ---
+sync  :: () -> void #foreign "canvas" "sync" ---
+
+get_size_internal :: (out_width: ^f32, out_height: ^f32) -> void #foreign "canvas" "get_size" ---
+get_size :: () -> (f32, f32) {
+    sx, sy: f32;
+    get_size_internal(^sx, ^sy);
+    return sx, sy;
+}
+
+// Styling settings
+fill_style              :: (style: str) -> void #foreign "canvas" "fill_style" ---
+font                    :: (fontname: str) -> void #foreign "canvas" "font" ---
+image_smoothing_enabled :: (enabled: bool) -> void #foreign "canvas" "image_smoothing_enabled" ---
+line_join               :: (join: LineJoin) -> void #foreign "canvas" "line_join" ---
+line_width              :: (width: f32) -> void #foreign "canvas" "line_width" ---
+stroke_style            :: (style: str) -> void #foreign "canvas" "stroke_style" ---
+text_align              :: (align: TextAlign) -> void #foreign "canvas" "text_align" ---
+
+// Drawing
+arc                :: (x: f32,  y:  f32,  r: f32, start_angle: f32, end_angle: f32, counter_clockwise := false) -> void #foreign "canvas" "arc" ---
+arc_to             :: (x1: f32, y1: f32, x2: f32, y2: f32, radius: f32) -> void #foreign "canvas" "arc_to" ---
+begin_path         :: () -> void #foreign "canvas" "begin_path" ---
+bezier_curve_to    :: (cp1x: f32, cp1y: f32, cp2x: f32, cp2y: f32, x: f32, y: f32) -> void #foreign "canvas" "bezier_curve_to" ---
+clear_rect         :: (x: f32, y: f32, w: f32, h: f32) -> void #foreign "canvas" "clear_rect" ---
+clip               :: (clip_rule := FillRule.NonZero) -> void #foreign "canvas" "clip" ---
+close_path         :: () -> void #foreign "canvas" "close_path" ---
+ellipse            :: (x: f32, y: f32, rx: f32, ry: f32, rotation: f32, start_angle: f32, end_angle: f32, counter_clockwise := false) -> void #foreign "canvas" "ellipse" ---
+fill               :: (fill_rule := FillRule.NonZero) -> void #foreign "canvas" "fill" ---
+fill_rect          :: (x: f32, y: f32, w: f32, h: f32) -> void #foreign "canvas" "fill_rect" ---
+fill_text          :: (text: str, x: f32, y: f32, max_width := -1.0f) -> void #foreign "canvas" "fill_text" ---
+line_to            :: (x: f32, y: f32) -> void #foreign "canvas" "line_to" ---
+move_to            :: (x: f32, y: f32) -> void #foreign "canvas" "move_to" ---
+quadratic_curve_to :: (cpx: f32, cpy: f32, x: f32, y: f32) -> void #foreign "canvas" "quadratic_curve_to" ---
+rect               :: (x: f32, y: f32, w: f32, h: f32) -> void #foreign "canvas" "rect" ---
+restore            :: () -> void #foreign "canvas" "restore" ---
+rotate             :: (angle: f32) -> void #foreign "canvas" "rotate" ---
+save               :: () -> void #foreign "canvas" "save" ---
+scale              :: (x: f32, y: f32) -> void #foreign "canvas" "scale" ---
+set_transform      :: (a: f32, b: f32, c: f32, d: f32, e: f32, f: f32) -> void #foreign "canvas" "set_transform" ---
+stroke             :: () -> void #foreign "canvas" "stroke" ---
+stroke_rect        :: (x: f32, y: f32, w: f32, h: f32) -> void #foreign "canvas" "stroke_rect" ---
+stroke_text        :: (text: str, x: f32, y: f32, max_width := -1.0f) -> void #foreign "canvas" "stroke_text" ---
+transform          :: (a: f32, b: f32, c: f32, d: f32, e: f32, f: f32) -> void #foreign "canvas" "transform" ---
+translate          :: (x: f32, y: f32) -> void #foreign "canvas" "translate" ---
+
+// Mouse interaction
+// This one does not wait for a click, and live updates.
+// Use '.sync'
+mouse_position_internal :: (out_x: ^f32, out_y: ^f32) -> void #foreign "canvas" "mouse_position" ---
+mouse_position :: () -> (f32, f32) {
+    mx, my: f32;
+    mouse_position_internal(^mx, ^my);
+    return mx, my;
+}
+
+// This one just tells you if the mouse is down or not.
+mouse_down :: () -> bool #foreign "canvas" "mouse_down" ---
+
+// This one waits for a click event to happen, and returns the position
+// on the canvas where the click occurs.
+mouse_click_internal :: (out_x, out_y: ^f32) -> void #foreign "canvas" "mouse_get_click" ---
+mouse_click :: () -> (f32, f32) {
+    mx, my: f32;
+    mouse_click_internal(^mx, ^my);
+    return mx, my;
+}
