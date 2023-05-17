@@ -14,7 +14,6 @@ template_registry: otmp.TemplateRegistry;
 index :: (req: &Request, res: &Response) {
     template_registry->render_template("index", &res.writer, &.{
         endpoint = ENDPOINT,
-        code_body = "",
     });
 
     res->status(200);
@@ -124,10 +123,10 @@ manifest_json :: (req: &Request, res: &Response) {
             },
         ],
 
-        start_url = "/playground/?source=pwa",
+        start_url = tprintf("{}/?source=pwa", ENDPOINT),
         background_color = "#111",
         display = "standalone",
-        scope = "/playground",
+        scope = tprintf("{}/", ENDPOINT),
         theme_color = "#111",
         shortcuts = str.[],
         description = "Onyx Playground",
@@ -163,9 +162,17 @@ core_libraries_json :: (req: &Request, res: &Response) {
     res->end();
 }
 
+@route.{.GET, "/favicon.ico"}
+favicon :: (req: &Request, res: &Response) {
+    res->file("www/static/favicon.ico");
+    res->status(200);
+    res->end();
+}
+
 
 setup_server :: () -> http.server.Pipeline {
     http.server.set_mime_type("wasm", "application/wasm");
+    http.server.set_mime_type("ico", "image/x-icon");
 
     router := http.server.router() |> alloc.on_heap();
     router->collect_routes();

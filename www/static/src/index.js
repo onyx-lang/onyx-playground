@@ -101,7 +101,7 @@ async function submit_code() {
         let annotations = [];
         let lines = response_text.split("\n");
         for (let line of lines) {
-            let e = /\(\/tmp\/[^:]+:(\d+),(\d+)\) (.*)/.exec(line);
+            let e = /\(\/[^:]+:(\d+),(\d+)\) (.*)/.exec(line);
             if (e != null) {
                 annotations.push({
                     row: parseInt(e[1]) - 1,

@@ -1,0 +1,9 @@
+- [x] Modernize UI
+    - More 'floating buttons'
+    - Subtle drop shadows and rounded corners
+    - Settings menu could use a touchup
+- [ ] Quick-auto save to local storage, reload on page load
+- [ ] Tabbed code view
+- [ ] Redesign "Examples" dropdown
+- [ ] Hide Canvas/Output
+
