@@ -29,9 +29,9 @@
                 <button title="Run"      style="background-color: #abcd34" class="run-button" onclick="submit_code()"><i class="fas fa-play"></i></button>
                 <button title="Stop"     style="background-color: #cd3434" onclick="kill_code()"><i class="fas fa-stop"></i></button>
                 <button title="Save"     style="background-color: #3467cd" onclick="prompt_save()"><i class="fas fa-save"></i></button>
-                <button title="Load"     onclick="prompt_load()"><i class="fas fa-folder"></i></button>
-                <button title="Upload"   onclick="prompt_upload()"><i class="fas fa-upload"></i></button>
-                <button title="Download" onclick="prompt_download()"><i class="fas fa-download"></i></button>
+                <button title="Load"     style="background-color: #3467cd" onclick="prompt_load()"><i class="fas fa-folder"></i></button>
+                <button title="Upload"   style="background-color: #3467cd" onclick="prompt_upload()"><i class="fas fa-upload"></i></button>
+                <button title="Download" style="background-color: #3467cd" onclick="prompt_download()"><i class="fas fa-download"></i></button>
                 <a title="Settings" href="#settings-modal" rel="modal:open"><i class="fas fa fa-gears"></i></a>
 
                 <label style="margin-left: 64px" for="examples">Load example:</label>
@@ -50,17 +50,21 @@
         </div>
         
         <div id="folder-view" class="hidden">
-            <div class="floating-container">
-                <!--<div class="tab-line"><span>Storage</span></div>-->
-                <div class="menu-bar" style="border-bottom: 2px solid var(--light-background-color); margin-bottom: 12px">
+            <div class="menu-bar">
+                <div class="floating-container">
                     <div style="text-align: center">
-                        <button title="New File" onclick="folder_start_create_file()"><i class="fas fa-plus"></i></button>
-                        <button title="Save" onclick="folder_save_current_file()"><i class="fas fa-save"></i></button>
-                        <button title="Upload" onclick="prompt_upload()"><i class="fas fa-upload"></i></button>
-                        <button title="Download" onclick="prompt_download()"><i class="fas fa-download"></i></button>
+                        <button title="Run"      style="background-color: #abcd34" class="run-button" onclick="submit_code()"><i class="fas fa-play"></i></button>
+                        <button title="Stop"     style="background-color: #cd3434" onclick="kill_code()"><i class="fas fa-stop"></i></button>
+                        <button title="New File" style="background-color: #3467cd" onclick="folder_start_create_file()"><i class="fas fa-plus"></i></button>
+                        <button title="Save"     style="background-color: #3467cd" onclick="folder_save_current_file()"><i class="fas fa-save"></i></button>
+                        <button title="Upload"   style="background-color: #3467cd" onclick="prompt_upload()"><i class="fas fa-upload"></i></button>
+                        <button title="Download" style="background-color: #3467cd" onclick="prompt_download()"><i class="fas fa-download"></i></button>
+                        <a title="Settings" href="#settings-modal" rel="modal:open"><i class="fas fa fa-gears"></i></a>
                     </div>
                 </div>
+            </div>
 
+            <div class="floating-container">
                 <div class="folder-root">
                 </div>
             </div>
@@ -78,7 +82,6 @@
             <div id="code-horizontal-divider" class="divider"></div>
 
             <div class="right-half">
-                <!--<div class="tab-line"><span>Canvas</span></div>-->
                 <div>
                     <div class="floating-container">
                         <canvas id="render-target"></canvas>
@@ -87,14 +90,12 @@
 
                 <div id="vertical-divider" class="divider"></div>
 
-                <!--<div class="tab-line"><span>Output</span></div>-->
                 <div>
                     <div class="floating-container">
                         <pre id="code-result"></pre>
                         <input type="textbox" id="input-bar" class="hide" placeholder="Input" />
                     </div>
                 </div>
-                <!--<input type="button" id="input-submit" value="Enter" onclick="submit_input()" /> -->
             </div>
         </div>
 

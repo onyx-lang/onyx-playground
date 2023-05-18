@@ -135,6 +135,8 @@ async function kill_code() {
     }
 
     update_running_msg();
+    $("#input-bar").addClass("hide");
+    $("#render-target").removeClass("highlight");
 }
 
 function update_running_msg() {
@@ -259,8 +261,9 @@ function show_input() {
 function submit_input() {
     let $inputbar = $("#input-bar");
     let input = $inputbar.val();
+    input += "\n";
 
-    write_output(input + "\n", false);
+    write_output(input, false);
 
     let input_array = new Uint8Array(input_shared_buffer, 4);
     input_array.fill(0);

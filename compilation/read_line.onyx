@@ -4,15 +4,24 @@ use core
 
 read_line :: () -> str {
     #persist buffer: [1024] u8;
+    return __read(buffer);
+}
 
+#local __read :: (buf: [] u8) -> str {
     core.__flush_stdio();
     
     read_line_available :: () -> bool #foreign "host" "read_line_available" ---
     read_line           :: (buffer: [] u8) -> u32 #foreign "host" "read_line" ---
     
     read_line_available();
-    length := read_line(~~buffer);
+    length := read_line(buf);
     
-    return str.{ ~~buffer, length };
+    return str.{ buf.data, length };
 }
 
+use runtime
+#inject runtime.platform {
+    __read_from_input :: (buf: [] u8) -> i32 {
+        return __read(buf).length;
+    }
+}

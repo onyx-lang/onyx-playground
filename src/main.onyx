@@ -25,7 +25,7 @@ list_examples :: (req: &Request, res: &Response) {
     use core.encoding.json
 
     example_folder := os.path_join(ONYX_SOURCE_FOLDER, "examples");
-    names := iter.comp(os.list_directory(example_folder), #(tprintf("{}", it->name())));
+    names := iter.comp(os.list_directory(example_folder), #(string.temp_copy(it->name())));
     slice.sort(names, string.compare);
     for& names do it.count -= 5;
 

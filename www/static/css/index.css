@@ -1,4 +1,5 @@
 :root {
+    --top-menu-bar-height: 40px;
     --menu-bar-height: 40px;
     --input-bar-height: 48px;
     --divider-size: 4px;
@@ -34,7 +35,7 @@
     --light-background-color: #e0e0e0;
     --active-color: #cccccc;
     --foreground-color: #000000;
-    --floating-border-color: #000000;
+    --floating-border-color: #808080;
 }
 
 .ui-blue-theme {
@@ -56,7 +57,9 @@ body {
 }
 
 select {
-    /* margin: calc((var(--menu-bar-height) - 24px) / 2);*/
+    margin: 2px;
+    border-radius: var(--box-padding);
+
     height: 24px;
     min-width: 64px;
 
@@ -64,7 +67,6 @@ select {
     color: var(--foreground-color);
     background: var(--light-background-color);
 
-    /* border-radius: 6px; */
 
     transition: all 0.5s;
 }
@@ -113,10 +115,18 @@ select:hover {
 
 #folder-view {
     width: calc(var(--folder-width) - var(--divider-size));
-    height: calc(100vh - var(--menu-bar-height) - 2 * var(--box-padding));
+    height: calc(100vh - 2 * var(--box-padding));
 
     float: left;
     padding: 4px;
+
+    display: grid;
+    grid-template-rows: calc(var(--menu-bar-height) + 2 * var(--box-padding)) 1fr;
+}
+
+#folder-view .menu-bar {
+    padding-left: 0;
+    padding-right: 0;
 }
 
 #code-container {
@@ -125,7 +135,7 @@ select:hover {
 }
 
 .left-half, .right-half {
-    height: calc(100vh - var(--menu-bar-height) - 2 * var(--box-padding));
+    height: calc(100vh - var(--top-menu-bar-height) - 2 * var(--box-padding));
     padding: var(--box-padding);
     float: left;
 }
@@ -152,6 +162,7 @@ select:hover {
     min-height: var(--menu-bar-height);
     height: var(--menu-bar-height);
     padding: var(--box-padding);
+    border-radius: var(--box-padding);
 }
 
 .floating-container {
@@ -201,7 +212,7 @@ select:hover {
 
 #code-horizontal-divider, #main-horizontal-divider {
     min-width: var(--divider-size);
-    height: calc(100vh - var(--menu-bar-height));
+    height: calc(100vh - var(--top-menu-bar-height));
     cursor: col-resize;
 
     display: inline-block;
@@ -355,20 +366,18 @@ select:hover {
     /* line-height: var(--tab-line-height); */
 }
 
-/*
 ::-webkit-scrollbar {
-    width: 0.75em;
+    width: 0.45em;
 }
 
 ::-webkit-scrollbar-track {
-    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+    box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.3);
 }
 
 ::-webkit-scrollbar-thumb {
     background-color: var(--active-color);
     outline: 1px solid var(--background-color);
 }
-*/
 
 .folder-item {
     user-select: none;
@@ -409,7 +418,9 @@ select:hover {
     overflow-y: auto;
     overflow-x: hidden;
     height: 100%;
-    max-height: calc(100vh - var(--menu-bar-height) * 2 - var(--tab-line-height) - 12px);  /* subtract the padding */
+    max-height: calc(100vh - var(--menu-bar-height) - 5 * var(--box-padding));  /* subtract the padding */
+    background-color: var(--terminal-background-color);
+    border-radius: var(--box-padding);
 }
 
 .folder-root > .folder-item {

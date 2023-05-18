@@ -201,14 +201,13 @@ class FolderSystem {
 
 async function enable_ide_mode() {
     $("#simple-menubar").addClass("hidden");
-    $("#ide-menubar").removeClass("hidden");
+    // $("#ide-menubar").removeClass("hidden");
     $("#folder-view").removeClass("hidden");
     $("#main-horizontal-divider").removeClass("hidden");
 
-    if (localStorage.getItem("folder-width") == null) {
-        localStorage.setItem("folder-width", "18%");
-    }
+    localStorage.setItem("folder-width", "25%");
     $(":root").css("--folder-width", localStorage.getItem("folder-width"));
+    $(":root").css("--top-menu-bar-height", "0px");
 
     folders = new FolderSystem();
     folders.restore();
@@ -242,6 +241,7 @@ function disable_ide_mode() {
     $("#folder-view").addClass("hidden");
     $("#main-horizontal-divider").addClass("hidden");
     $(":root").css("--folder-width", "0px");
+    $(":root").css("--top-menu-bar-height", "40px");
 }
 
 async function populate_examples_folder() {
