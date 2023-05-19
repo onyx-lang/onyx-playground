@@ -105,15 +105,15 @@ async function submit_code() {
     } else {
         // Compile error
         let response_text = await response.text();
+
+        response_text = response_text.replace(/\(\/[^:]+:(\d+),(\d+)\) (.*)/g, "Line $1, column $2:\n    $3");
         
-        write_output("Failed to compile code\n", true);
+        write_output("Failed to compile your code:\n\n", true);
         write_output(response_text, true);
 
         // Add the errors as gutter items in ACE
         let annotations = [];
-        let lines = response_text.split("\n");
-        for (let line of lines) {
-            let e = /\(\/[^:]+:(\d+),(\d+)\) (.*)/.exec(line);
+        for (let e of response_text.matchAll(/Line (\d+), column (\d+):\n\s+(.*)/mg)) {
             if (e != null) {
                 annotations.push({
                     row: parseInt(e[1]) - 1,

@@ -66,7 +66,6 @@ select {
     color: var(--foreground-color);
     background: var(--light-background-color);
 
-
     transition: all 0.5s;
 }
 
@@ -146,8 +145,16 @@ select:hover {
 
 .right-half {
     width: calc(100% - var(--left-half-width) - var(--divider-size));
+    max-width: calc(100% - var(--left-half-width) - var(--divider-size));
+
     display: grid;
-    grid-template-rows: var(--top-half-height) calc(2 * var(--divider-size)) 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: var(--top-half-height) calc(2 * var(--divider-size)) minmax(0, 1fr);
+}
+
+.right-half > * {
+    width: 100%;
+    max-width: 100%;
 }
 
 .top-half, .bottom-half {

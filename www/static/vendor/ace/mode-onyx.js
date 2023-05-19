@@ -180,6 +180,10 @@ var onyxHighlightRules = function() {
                 regex : /$/,
                 next : "start"
             }, {
+                token: "keyword",
+                regex: /(TODO|BUG|HINT|FIXME)/,
+                next: "singleLineComment"
+            }, {
                 defaultToken: "comment"
             }
         ],
