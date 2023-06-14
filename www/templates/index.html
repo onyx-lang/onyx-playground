@@ -33,6 +33,8 @@
                 <button title="Upload"   style="background-color: #3467cd" onclick="prompt_upload()"><i class="fas fa-upload"></i></button>
                 <button title="Download" style="background-color: #3467cd" onclick="prompt_download()"><i class="fas fa-download"></i></button>
                 <a title="Settings" href="#settings-modal" rel="modal:open"><i class="fas fa fa-gears"></i></a>
+                <a title="Package Reference" href="https://docs.onyxlang.io/packages/core" target="_blank"><i class="fas fa fa-cube"></i></a>
+                <a title="Book" href="https://docs.onyxlang.io/book" target="_blank"><i class="fas fa fa-book"></i></a>
 
                 <label style="margin-left: 64px" for="examples">Load example:</label>
                 <select name="examples" id="examples-selector" onchange="load_example()">
@@ -41,18 +43,10 @@
             </div>
         </div>
         
-        <div id="ide-menubar" class="menu-bar hidden">
-            <div class="floating-container">
-                <button title="Run"      style="background-color: #abcd34" class="run-button" onclick="submit_code()"><i class="fas fa-play"></i></button>
-                <button title="Stop"     style="background-color: #cd3434" onclick="kill_code()"><i class="fas fa-stop"></i></button>
-                <a title="Settings" href="#settings-modal" rel="modal:open"><i class="fas fa fa-gears"></i></a>
-            </div>
-        </div>
-        
         <div id="folder-view" class="hidden">
             <div class="menu-bar">
                 <div class="floating-container">
-                    <div style="text-align: center">
+                    <div>
                         <button title="Run"      style="background-color: #abcd34" class="run-button" onclick="submit_code()"><i class="fas fa-play"></i></button>
                         <button title="Stop"     style="background-color: #cd3434" onclick="kill_code()"><i class="fas fa-stop"></i></button>
                         <button title="New File" style="background-color: #3467cd" onclick="folder_start_create_file()"><i class="fas fa-plus"></i></button>
@@ -60,6 +54,8 @@
                         <button title="Upload"   style="background-color: #3467cd" onclick="prompt_upload()"><i class="fas fa-upload"></i></button>
                         <button title="Download" style="background-color: #3467cd" onclick="prompt_download()"><i class="fas fa-download"></i></button>
                         <a title="Settings" href="#settings-modal" rel="modal:open"><i class="fas fa fa-gears"></i></a>
+                        <a title="Package Reference" href="https://docs.onyxlang.io/packages/core" target="_blank"><i class="fas fa fa-cube"></i></a>
+                        <a title="Book" href="https://docs.onyxlang.io/book" target="_blank"><i class="fas fa fa-book"></i></a>
                     </div>
                 </div>
             </div>
