@@ -4,7 +4,16 @@
     - Settings menu could use a touchup
 - [x] Quick-auto save to local storage, reload on page load
 - [x] Popup input box when needed
+
+- [ ] Rename IDE mode to Project mode
+    - [ ] Right click for new file/folder
+    - [x] Tabbed code view
+    - [ ] Files are per project
+    - [ ] Compiling is per project (all files are sent and a specific file is compiled)
+    - [ ] Multiple projects are stored in LS
+    - [ ] Projects can be exported and imported
+
+
 - [ ] Hide Canvas/Output
 - [ ] Redesign "Examples" dropdown
-- [ ] Tabbed code view
 

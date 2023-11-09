@@ -1,12 +1,13 @@
 :root {
     --top-menu-bar-height: 40px;
-    --menu-bar-height: 40px;
+    --menu-bar-height: 32px;
     --input-bar-height: 48px;
     --divider-size: 4px;
     --left-half-width: 70%;
     --top-half-height: 30%;
     --folder-width: 10%;
     --box-padding: 4px;
+    --tab-bar-height: 32px;
 }
 
 * {
@@ -174,7 +175,7 @@ select:hover {
     position: relative;
     min-height: var(--menu-bar-height);
     height: var(--menu-bar-height);
-    padding: var(--box-padding);
+    padding: 0 var(--box-padding);
     border-radius: var(--box-padding);
 }
 
@@ -188,8 +189,59 @@ select:hover {
 }
 
 #code-editor {
-    height: 100%;
-    border-radius: var(--box-padding);
+    height: calc(100% - var(--tab-bar-height));
+    /* border-radius: var(--box-padding); */
+}
+
+.tab-bar {
+    width: 100%;
+    background-color: var(--floating-border-color);
+    height: var(--tab-bar-height);
+
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.tab-bar > div {
+    overflow-y: auto;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.tab-bar .tab {
+    display: inline-block;
+    position: relative;
+    vertical-align: bottom;
+
+    min-width: 100px;
+    height: var(--tab-bar-height);
+    padding: 0 8px;
+
+    line-height: var(--tab-bar-height);
+    text-align: center;
+
+    font-size: 0.85rem;
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: var(--terminal-background-color);
+
+    transition: all 0.3s;
+}
+
+.tab-bar .tab:not(:last-child) {
+    border-right: 1px solid var(--floating-border-color);
+}
+
+.tab-bar .tab:first-child {
+    border-top-left-radius: var(--box-padding);
+}
+
+.tab-bar .tab:hover {
+    cursor: pointer;
+    background-color: var(--active-color);
+}
+
+.tab-bar .tab.selected {
+    background-color: var(--light-background-color);
 }
 
 #render-target {
@@ -380,7 +432,41 @@ select:hover {
     position: relative;
     cursor: pointer;
     transition: all 200ms;
-    padding-left: 4px;
+    padding-left: 8px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.folder-item::before {
+    content: ''; 
+    display: inline-block;
+    min-width: 16px;
+}
+
+.folder-item.directory.open::before {
+    content: "\f078";
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    font-style: normal;
+    font-variant: normal;
+    text-rendering: auto;
+    line-height: 1;
+
+    color: var(--floating-border-color);
+}
+
+.folder-item.directory:not(.open)::before {
+    content: "\f054";
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    font-style: normal;
+    font-variant: normal;
+    text-rendering: auto;
+    line-height: 1;
+
+    color: var(--floating-border-color);
 }
 
 .folder-item.file.active {
@@ -403,10 +489,12 @@ select:hover {
 
 .folder {
     position: relative;
-    left: 32px;
-    width: calc(100% - 32px);
+    left: 14px;
+    padding-left: 6px;
+    width: calc(100% - 20px);
     overflow-y: auto;
     overflow-x: hidden;
+    border-left: 1px solid rgba(0, 0, 0, 0.3);
 }
 
 .folder-root {
@@ -438,4 +526,35 @@ select:hover {
     border-left: 1px solid var(--floating-border-color);
     background-color: var(--light-background-color);
     box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.4);
+}
+
+
+#context-menu {
+    position: fixed;
+    left: 0;
+    top: 0;
+    min-width: 150px;
+    background-color: var(--background-color);
+    border: 1px solid var(--floating-border-color);
+    border-radius: var(--box-padding);
+
+    font-size: 0.8rem;
+
+    box-shadow: 0px 1px 2px 1px rgba(0, 0, 0, 0.4);
+
+    z-index: 10000;
+}
+
+#context-menu > div {
+    transition: all 0.3s;
+    padding: var(--box-padding);
+}
+
+#context-menu > div:hover {
+    cursor: pointer;
+    background-color: var(--light-background-color);
+}
+
+#context-menu > div:not(:first-child) {
+    border-top: 1px solid rgba(0, 0, 0, 0.4);
 }

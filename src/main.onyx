@@ -183,7 +183,7 @@ setup_server :: () -> http.server.Pipeline {
         "www/static"
     ) |> alloc.on_heap();
 
-    logger := http.server.logger() |> alloc.on_heap();
+    logger := http.server.logger(style=.V2) |> alloc.on_heap();
 
     pipeline := http.server.pipeline();
 

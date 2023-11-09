@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>Onyx compiler</title> 
+        <title>Onyx Playground</title> 
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta name="theme-color" content="#111111"/>
 
@@ -17,6 +17,7 @@
         <script defer src="{% $endpoint %}/static/src/storage.js"></script>
         <script defer src="{% $endpoint %}/static/src/canvas.js"></script>
         <script defer src="{% $endpoint %}/static/src/folders.js"></script>
+        <script defer src="{% $endpoint %}/static/src/editor.js"></script>
         <script defer src="{% $endpoint %}/static/vendor/ace/ace.js"></script>
         <script defer src="{% $endpoint %}/static/vendor/jquery/jquery.min.js"></script>
         <script defer src="{% $endpoint %}/static/vendor/jquery/jquery.modal.min.js"></script>
@@ -36,10 +37,10 @@
                 <a title="Package Reference" href="https://docs.onyxlang.io/packages/core" target="_blank"><i class="fas fa fa-cube"></i></a>
                 <a title="Book" href="https://docs.onyxlang.io/book" target="_blank"><i class="fas fa fa-book"></i></a>
 
-                <label style="margin-left: 64px" for="examples">Load example:</label>
+                <!-- <label style="margin-left: 64px" for="examples">Load example:</label>
                 <select name="examples" id="examples-selector" onchange="load_example()">
                     <option value="none">---</option>
-                </select>
+                </select> -->
             </div>
         </div>
         
@@ -71,6 +72,10 @@
         <div id="code-container">
             <div class="left-half">
                 <div class="floating-container">
+                    <div class="tab-bar">
+                        <div id="tab-container">
+                        </div>
+                    </div>
                     <pre id="code-editor" ondragover="handle_dragover(event);" ondrop="handle_drop(event);"></pre>
                 </div>
             </div>
@@ -190,6 +195,17 @@
             <p></p>
             <br/>
             <button onclick="folder_finalize_remove()">Remove</button>
+        </div>
+
+        <div id="context-menu" class="hidden">
+            <div>
+                <i class="fa fa-pencil"></i>
+                Edit
+            </div>
+            <div>
+                <i class="fa fa-trash"></i>
+                Delete
+            </div>
         </div>
     </body>
 </html>

@@ -1,6 +1,5 @@
 let wasm_worker = null;
-let editor_keybind_mode = "normal";
-let editor_theme = "chrome";
+let editor = null;
 let ui_theme = "dark";
 let ui_mode = "simple";
 
@@ -83,8 +82,7 @@ async function submit_code() {
 
     clear_output();
     quick_save();
-    let editor = ace.edit('code-editor');
-    let code = editor.getValue();
+    let code = editor.getText();
 
     let response = await fetch(window.ROOT_ENDPOINT + "/compile", {
         method: 'POST',
@@ -98,7 +96,7 @@ async function submit_code() {
     if (response.status == 200) {
         // Successful compile
         // Clear errors in the gutter first
-        editor.getSession().setAnnotations([]);
+        editor.setAnnotations([]);
 
         run_wasm(await response.arrayBuffer());
 
@@ -124,7 +122,7 @@ async function submit_code() {
             }
         }
 
-        editor.getSession().setAnnotations(annotations);
+        editor.setAnnotations(annotations);
     }
 }
 
@@ -150,7 +148,6 @@ function update_running_msg() {
 }
 
 function change_editor_theme(value) {
-    let editor = ace.edit('code-editor');
     let elem = document.getElementById('code-editor-theme');
 
     if (value == null) {
@@ -159,14 +156,11 @@ function change_editor_theme(value) {
         document.querySelector(`#code-editor-theme option[value="${value}"]`).selected = true;
     }
 
-    editor.setTheme(`ace/theme/${value}`);
-
-    editor_theme = value;
+    editor.setTheme(value);
     persist_settings();
 }
 
 function change_keybindings(value) {
-    let editor = ace.edit('code-editor');
     let elem = document.getElementById('code-editor-keybindings');
 
     if (value == null) {
@@ -175,10 +169,7 @@ function change_keybindings(value) {
         document.querySelector(`#code-editor-keybindings option[value="${value}"]`).selected = true;
     }
 
-    if (value == "normal") editor.setKeyboardHandler("");
-    else                   editor.setKeyboardHandler(`ace/keyboard/${value}`);
-
-    editor_keybind_mode = value;
+    editor.setKeybindings(value);
     persist_settings();
 }
 
@@ -221,8 +212,8 @@ function change_ui_mode(value) {
 }
 
 function persist_settings() {
-    localStorage["editor_theme"] = editor_theme;
-    localStorage["editor_keybind_mode"] = editor_keybind_mode;
+    localStorage["editor_theme"] = editor.theme;
+    localStorage["editor_keybind_mode"] = editor.keybinds;
     localStorage["ui_theme"] = ui_theme;
     localStorage["ui_mode"] = ui_mode;
 }
@@ -243,8 +234,7 @@ function load_settings() {
 async function handle_drop(e) {
     e.preventDefault();
 
-    let editor = ace.edit('code-editor');
-    editor.setValue(await e.dataTransfer.items[0].getAsFile().text(), 0);
+    editor.setText(await e.dataTransfer.items[0].getAsFile().text(), 0);
 
     return false;
 }
@@ -278,6 +268,7 @@ function submit_input() {
 
     $inputbar.val("");
     $inputbar.addClass("hide");
+    $inputbar.blur();
 }
 
 function populate_examples() {
@@ -303,14 +294,12 @@ function load_example() {
     fetch(`${ROOT_ENDPOINT}/example?example=${example}`)
     .then(x => x.text())
     .then(text => {
-        let editor = ace.edit('code-editor');
-        editor.setValue(text, 0);
+        editor.setText(text);
     });
 }
 
 async function request_permalink() {
-    let editor = ace.edit('code-editor');
-    let code = editor.getValue();
+    let code = editor.getText();
 
     let response = await fetch(window.ROOT_ENDPOINT + "/permalink", {
         method: 'POST',
@@ -351,12 +340,7 @@ window.onload = () => {
         });
     }
 
-    let editor = ace.edit('code-editor');
-
-    editor.setTheme('ace/theme/chrome');
-    editor.setShowPrintMargin(false);
-    editor.setFontSize(16);
-    editor.session.setMode('ace/mode/onyx');
+    editor = new Editor("code-editor");
 
     populate_examples();
     load_settings();

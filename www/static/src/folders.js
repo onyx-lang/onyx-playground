@@ -122,7 +122,7 @@ class FolderSystem {
         }
     }
 
-    build_folder_view(onclick, selector=".folder-root") {
+    build_folder_view(selector=".folder-root") {
         let $root = $(selector);
 
         let build = (t, name) => {
@@ -144,8 +144,6 @@ class FolderSystem {
                         output += `<div class="folder-item directory ${t.state}" data-filename="${name}">
                         <i class="fa ${t.state == "open" ? "fa-folder-open" : "fa-folder"}"></i>
                         ${t.name}
-                        <i class="folder-item-button fa fa-trash"></i>
-                        <i class="folder-item-button fa fa-pencil-alt"></i>
                         </div>`;
 
                         output += `<div class="folder ${t.state == "closed" ? "hidden" : ""}">`;
@@ -166,8 +164,6 @@ class FolderSystem {
                     output += `<div class="folder-item file" data-filename="${name}">
                     <i class="fa fa-file"></i>
                     ${t.name}
-                    <i class="folder-item-button fa fa-trash"></i>
-                    <i class="folder-item-button fa fa-pencil-alt"></i>
                     </div>`;
                     break;
                 }
@@ -180,9 +176,10 @@ class FolderSystem {
         let root_html = build(root);
 
         $root.html(root_html);
-        $root.find(".folder-item").click(onclick);
-        $root.find(".folder-item i.fa-pencil-alt").click(folder_start_rename);
-        $root.find(".folder-item i.fa-trash").click(folder_start_remove);
+        // $root.find(".folder-item i.fa-pencil-alt").click(folder_start_rename);
+        // $root.find(".folder-item i.fa-trash").click(folder_start_remove);
+        // <i class="folder-item-button fa fa-trash"></i>
+        // <i class="folder-item-button fa fa-pencil-alt"></i>
     }
 
     save() {
@@ -212,18 +209,19 @@ async function enable_ide_mode() {
     folders = new FolderSystem();
     folders.restore();
 
-    if (folders.lookup("Examples") == null) {
-        await populate_examples_folder();
-    }
+    // if (folders.lookup("Examples") == null) {
+    //     await populate_examples_folder();
+    // }
 
-    if (folders.lookup("Core Libraries") == null) {
-        await populate_core_libraries_folder();
-    }
+    // if (folders.lookup("Core Libraries") == null) {
+    //     await populate_core_libraries_folder();
+    // }
 
-    await populate_simple_saved_folder();
+    // await populate_simple_saved_folder();
 
     folders.save();
-    folders.build_folder_view(folder_item_click);
+    folder_rebuild_view();
+    
  
     // Enable :w for vim mode
     // This is such a freaking hack. I don't know how to properly wait for the module
@@ -286,6 +284,89 @@ async function populate_core_libraries_folder() {
     core_dir.elems = core_libs;
 }
 
+function folder_rebuild_view() {
+    folders.build_folder_view();
+
+    $(".folder-root").on("contextmenu", folder_context_menu(`
+        <div>
+            <i class="fa fa-plus"></i>
+            New File
+        </div>
+        <div>
+            <i class="fa fa-plus"></i>
+            New Folder
+        </div>
+    `));
+
+    $(".folder-item").on("click", folder_item_click);
+
+    $(".folder-item.file").on("contextmenu", folder_context_menu(`
+        <div onclick="folder_context_menu_close(); folder_start_rename(event)">
+            <i class="fa fa-pencil"></i>
+            Rename
+        </div>
+        <div>
+            <i class="fa fa-folder"></i>
+            Move
+        </div>
+        <div>
+            <i class="fa fa-copy"></i>
+            Duplicate
+        </div>
+        <div onclick="folder_context_menu_close(); folder_start_remove(event)">
+            <i class="fa fa-trash"></i>
+            Delete
+        </div>
+    `, ($cm, e) => $cm.attr("data-filename", $(e.target).data("filename"))));
+
+    $(".folder-item.directory").on("contextmenu", folder_context_menu(`
+        <div onclick="folder_context_menu_close(); folder_start_rename(event)">
+            <i class="fa fa-pencil"></i>
+            Rename
+        </div>
+        <div>
+            <i class="fa fa-plus"></i>
+            New File
+        </div>
+        <div>
+            <i class="fa fa-plus"></i>
+            New Folder
+        </div>
+        <div onclick="folder_context_menu_close(); folder_start_remove(event)">
+            <i class="fa fa-trash"></i>
+            Delete
+        </div>
+    `, ($cm, e) => $cm.attr("data-filename", $(e.target).data("filename"))));
+}
+
+function folder_context_menu(menu_contents, attachData) {
+    return e => {
+        let $cm = $("#context-menu");
+        $cm.css("left", e.clientX + "px");
+        $cm.css("top", e.clientY + "px");
+        $cm.removeClass("hidden");
+
+        $cm.html(menu_contents);
+
+        $(document.body).append(`
+            <div id="context-menu-closer" style="position: fixed; z-index: 9999; top: 0; right: 0; left: 0; bottom: 0;"></div>
+        `);
+
+        $("#context-menu-closer")
+            .on("click", folder_context_menu_close)
+            .on("contextmenu", () => false);
+
+        if (attachData) attachData($cm, e);
+
+        return false;
+    }
+}
+
+function folder_context_menu_close() {
+    $("#context-menu-closer").remove();
+    $("#context-menu").addClass("hidden");
+}
+
 function folder_item_click(e) {
     let $target = $(e.target);
 
@@ -313,18 +394,8 @@ function folder_item_click(e) {
 }
 
 function folder_open_file(filename) {
-    let editor = ace.edit("code-editor");
-    if (folders.active_file_path != "") {
-        let file = folders.lookup(folders.active_file_path);
-        if (file != null) {
-            file.contents = editor.getValue();
-            folders.save();
-        }
-    }
-
     let file = folders.lookup(filename);
-    editor.setValue(file.contents);
-    editor.clearSelection();
+    editor.openOrSwitchToTab(filename, file.name, () => file.contents);
     folders.active_file_path = filename;
 }
 
@@ -340,7 +411,7 @@ function folder_finalize_create_file() {
 
     folders.create_file(path, "");
     folders.save();
-    folders.build_folder_view(folder_item_click);
+    folder_rebuild_view();
 
     folder_open_file(path);
 
@@ -363,7 +434,7 @@ function folder_finalize_rename(e) {
 
     folders.move_file(current_filename, new_filename);
     folders.save();
-    folders.build_folder_view(folder_item_click);
+    folder_rebuild_view();
 
     folder_open_file(new_filename);
 }
@@ -382,17 +453,16 @@ function folder_finalize_remove() {
 
     folders.remove(filename);
     folders.save();
-    folders.build_folder_view(folder_item_click);
+    folder_rebuild_view();
 
     $.modal.close();
 }
 
 function folder_save_current_file() {
-    let editor = ace.edit("code-editor");
     if (folders.active_file_path != "") {
         let file = folders.lookup(folders.active_file_path);
         if (file != null) {
-            file.contents = editor.getValue();
+            file.contents = editor.getText();
             folders.save();
         }
     }

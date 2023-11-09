@@ -37,8 +37,7 @@ function save_to_local_storage() {
 }
 
 function save_to_local_storage_with_name(filename) {
-    let editor = ace.edit('code-editor');
-    let code = editor.getValue();
+    let code = editor.getText();
 
     localStorage["saved_" + filename] = code;
 
@@ -57,8 +56,7 @@ function load_from_local_storage() {
 }
 
 function load_from_local_storage_with_name(filename) {
-    let editor = ace.edit('code-editor');
-    let code = editor.getValue();
+    let code = editor.getText();
 
     let maybe_code = localStorage.getItem("saved_" + filename);
     if (maybe_code != null) {
@@ -75,21 +73,18 @@ function delete_from_local_storage_with_name(filename, cb) {
 }
 
 function quick_save() {
-    let editor = ace.edit('code-editor');
-    let code = editor.getValue();
+    let code = editor.getText();
 
     localStorage.setItem("quicksave", code);
 }
 
 function quick_load() {
-    let editor = ace.edit('code-editor');
-
     let maybe_code = localStorage.getItem("quicksave");
     if (maybe_code != null) {
-        editor.setValue(maybe_code);
+        editor.setText(maybe_code);
         editor.clearSelection();
     } else {
-        editor.setValue(`use core {*}
+        editor.setText(`use core {*}
 
 main :: () {
     println("Hello, Onyx!");
@@ -99,8 +94,7 @@ main :: () {
 }
 
 function prompt_download() {
-    let editor = ace.edit('code-editor');
-    let code = editor.getValue();
+    let code = editor.getText();
 
     let blob = new Blob([ code ], {
         type: 'text/plain'
@@ -131,8 +125,7 @@ function file_uploaded(ev) {
     reader.readAsText(file, 'UTF-8');
     reader.onload = readerEvent => {
         let code = readerEvent.target.result;
-        let editor = ace.edit('code-editor');
-        editor.setValue(code);
+        editor.setText(code);
         editor.clearSelection();
     }
 }
