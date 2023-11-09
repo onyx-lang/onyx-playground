@@ -6,12 +6,25 @@
 - [x] Popup input box when needed
 
 - [ ] Rename IDE mode to Project mode
-    - [ ] Right click for new file/folder
+    - [ ] Right click menu
+        - [x] New file
+        - [x] New folder
+        - [x] New file/folder in folder
+        - [ ] Move
+        - [x] Duplicate
     - [x] Tabbed code view
+    - [x] File saving happens per tab
+        - [x] Tabs know when their contents is edited
+        - [x] Save everything on run
+    - [x] Ctrl+s to save
+    - [x] Drag/Drop upload files
+    - [ ] Download
     - [ ] Files are per project
     - [ ] Compiling is per project (all files are sent and a specific file is compiled)
     - [ ] Multiple projects are stored in LS
     - [ ] Projects can be exported and imported
+    - [ ] JS Virtual Filesystem
+        - [ ] Support Files in JS platform layer
 
 
 - [ ] Hide Canvas/Output

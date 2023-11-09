@@ -334,18 +334,21 @@ function save_split_sizes() {
 }
 
 window.onload = () => {
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register(window.ROOT_ENDPOINT + "/static/src/service-worker.js", {
-            scope: window.ROOT_ENDPOINT
-        });
-    }
+    // if ('serviceWorker' in navigator) {
+    //     navigator.serviceWorker.register(window.ROOT_ENDPOINT + "/static/src/service-worker.js", {
+    //         scope: window.ROOT_ENDPOINT
+    //     });
+    // }
 
     editor = new Editor("code-editor");
 
     populate_examples();
     load_settings();
-    quick_load();
-    setInterval(quick_save, 2 * 60 * 1000); // Quick save every five minutes
+    if (ui_mode == "simple") {
+        quick_load();
+    }
+
+    setInterval(quick_save, 2 * 60 * 1000); // Quick save every two minutes
 
     make_resizer("main-horizontal-divider", "--folder-width", "", (e) => {
         save_split_sizes();

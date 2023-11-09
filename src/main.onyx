@@ -77,7 +77,7 @@ compile_onyx :: (req: &Request, res: &Response) {
 
             compile_reader := io.reader_make(&compile_process);
             compile_output := compile_reader->read_all();
-            logf(.Info, compile_output);
+            // logf(.Info, compile_output);
             
             switch os.process_wait(&compile_process) {
                 case .Success {

@@ -168,7 +168,6 @@ select:hover {
 .top-half, .bottom-half {
     width: 100vw;
     float: left;
-    display: inline-block;
 }
 
 .menu-bar {
@@ -244,6 +243,10 @@ select:hover {
     background-color: var(--light-background-color);
 }
 
+.tab-bar .tab[data-unsaved="true"] {
+    border-bottom: 4px solid red;
+}
+
 #render-target {
     width: 100%;
     height: 100%;
@@ -280,7 +283,6 @@ select:hover {
     height: calc(100vh - var(--top-menu-bar-height));
     cursor: col-resize;
 
-    display: inline-block;
     float: left;
     z-index: 1000;
 }
@@ -431,7 +433,6 @@ select:hover {
     user-select: none;
     position: relative;
     cursor: pointer;
-    transition: all 200ms;
     padding-left: 8px;
     padding-top: 4px;
     padding-bottom: 4px;

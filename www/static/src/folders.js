@@ -3,15 +3,18 @@
 class FolderSystem {
     constructor() {
         this.folders = [];
-        this.active_file_path = "";
+    }
+
+    _getPathParts(path) {
+        return path.split("/").filter(x => x != "");
     }
 
     create_directory(path) {
-        if (path == "") {
+        if (path == "" || path == "/") {
             return { type:"dir", elems:this.folders }
         }
 
-        let parts = path.split("/");
+        let parts = this._getPathParts(path);
         let name = parts.at(-1);
 
         let root = this.folders;
@@ -82,7 +85,7 @@ class FolderSystem {
 
     // Returns null if the item at the path does not exist
     lookup(path) {
-        let parts = path.split("/");
+        let parts = this._getPathParts(path);
         
         let root = { type:"dir", elems:this.folders };
         let i;
@@ -208,19 +211,16 @@ async function enable_ide_mode() {
 
     folders = new FolderSystem();
     folders.restore();
-
-    // if (folders.lookup("Examples") == null) {
-    //     await populate_examples_folder();
-    // }
-
-    // if (folders.lookup("Core Libraries") == null) {
-    //     await populate_core_libraries_folder();
-    // }
-
-    // await populate_simple_saved_folder();
-
-    folders.save();
     folder_rebuild_view();
+
+    editor.restoreTabState(path => {
+        let file = folders.lookup(path);
+        if (file) return file.contents;
+
+        return "";
+    });
+
+    document.addEventListener("keydown", ctrlSHandler);
     
  
     // Enable :w for vim mode
@@ -240,6 +240,18 @@ function disable_ide_mode() {
     $("#main-horizontal-divider").addClass("hidden");
     $(":root").css("--folder-width", "0px");
     $(":root").css("--top-menu-bar-height", "40px");
+
+    document.removeEventListener("keydown", ctrlSHandler);
+
+    editor.saveTabState();
+}
+
+function ctrlSHandler(e) {
+    if (e.ctrlKey && e.key == 's') {
+        folder_save_current_file();
+        e.preventDefault();
+        return false;
+    }
 }
 
 async function populate_examples_folder() {
@@ -288,11 +300,11 @@ function folder_rebuild_view() {
     folders.build_folder_view();
 
     $(".folder-root").on("contextmenu", folder_context_menu(`
-        <div>
+        <div onclick="folder_context_menu_close(); folder_start_create('file', event)">
             <i class="fa fa-plus"></i>
             New File
         </div>
-        <div>
+        <div onclick="folder_context_menu_close(); folder_start_create('directory', event)">
             <i class="fa fa-plus"></i>
             New Folder
         </div>
@@ -309,7 +321,7 @@ function folder_rebuild_view() {
             <i class="fa fa-folder"></i>
             Move
         </div>
-        <div>
+        <div onclick="folder_context_menu_close(); folder_duplicate(event)">
             <i class="fa fa-copy"></i>
             Duplicate
         </div>
@@ -324,11 +336,11 @@ function folder_rebuild_view() {
             <i class="fa fa-pencil"></i>
             Rename
         </div>
-        <div>
+        <div onclick="folder_context_menu_close(); folder_start_create('file', event)">
             <i class="fa fa-plus"></i>
             New File
         </div>
-        <div>
+        <div onclick="folder_context_menu_close(); folder_start_create('directory', event)">
             <i class="fa fa-plus"></i>
             New Folder
         </div>
@@ -396,24 +408,50 @@ function folder_item_click(e) {
 function folder_open_file(filename) {
     let file = folders.lookup(filename);
     editor.openOrSwitchToTab(filename, file.name, () => file.contents);
-    folders.active_file_path = filename;
 }
 
-function folder_start_create_file() {
-    let $modal = $("#create-file-modal");
+function folder_start_create(type, event) {
+    let $modal = null;
+
+    if (type == 'file') {
+        $modal = $("#create-file-modal");
+    }
+
+    if (type == 'directory') {
+        $modal = $("#create-dir-modal");
+    }
+
+    if (!$modal) return;
+
     $modal.find("input").val("");
+    $modal.find(".create-base-path").html("/" + (event.target.parentNode.getAttribute("data-filename") ?? ""));
     $modal.modal();
 }
 
-function folder_finalize_create_file() {
-    let $modal = $("#create-file-modal");
-    let path = $modal.find("input").val();
+function folder_finalize_create(type) {
+    if (type == 'file') {
+        let $modal = $("#create-file-modal");
+        let name = $modal.find("input").val();
+        let path = $modal.find(".create-base-path").text();
+        let fullpath = path + "/" + name;
 
-    folders.create_file(path, "");
-    folders.save();
-    folder_rebuild_view();
+        folders.create_file(fullpath, "");
+        folders.save();
+        folder_rebuild_view();
 
-    folder_open_file(path);
+        folder_open_file(fullpath);
+    }
+
+    if (type == 'directory') {
+        let $modal = $("#create-dir-modal");
+        let name = $modal.find("input").val();
+        let path = $modal.find(".create-base-path").text();
+        let fullpath = path + "/" + name;
+
+        folders.create_directory(fullpath);
+        folders.save();
+        folder_rebuild_view();
+    }
 
     $.modal.close();
 }
@@ -458,12 +496,59 @@ function folder_finalize_remove() {
     $.modal.close();
 }
 
-function folder_save_current_file() {
-    if (folders.active_file_path != "") {
-        let file = folders.lookup(folders.active_file_path);
-        if (file != null) {
-            file.contents = editor.getText();
-            folders.save();
-        }
+function folder_duplicate(e) {
+    let filename = $(e.target).parent().attr("data-filename");
+    folders.create_file(filename + " copy", folders.lookup(filename)?.contents ?? "");
+    folders.save();
+    folder_rebuild_view();
+}
+
+async function folder_handle_drop(e) {
+    e.preventDefault();
+    if (e.dataTransfer.items.length == 0) return;
+
+    let parent;
+    if (e.target.classList.contains("directory")) {
+        parent = e.target.getAttribute("data-filename") ?? "/";
+    } else {
+        parent = e.target.closest(".folder")?.previousSibling?.getAttribute("data-filename") ?? "/";
     }
+
+    let file = await e.dataTransfer.items[0].getAsFile();
+    folders.create_file(parent + "/" + file.name, await file.text());
+    folders.save();
+    folder_rebuild_view();
+
+    return false;
+}
+
+function folder_save_current_file() {
+    let filepath = editor.getActiveFilePath();
+    if (filepath == "") return;
+
+    let file = folders.lookup(filepath);
+    if (file == null) return;
+
+    editor.saveTab(filepath, (contents) => {
+        file.contents = contents;
+        return true;
+    });
+    folders.save();
+}
+
+function folder_save_all_files() {
+    editor.saveAllTabs((filename, contents) => {
+        let file = folders.lookup(filename);
+        if (file != null) {
+            file.contents = contents;
+            return true;
+        }
+    });
+
+    folders.save();
+}
+
+function folder_run() {
+    folder_save_all_files();
+    submit_code();
 }

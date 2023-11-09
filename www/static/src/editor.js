@@ -32,6 +32,11 @@ class Editor {
         this.editor.setValue(contents);
     }
 
+    getActiveFilePath() {
+        if (this.selectedTab >= this.tabs.length) return "";
+        return this.tabs[this.selectedTab].path;
+    }
+
     clearSelection() {
         this.editor.clearSelection();
     }
@@ -51,17 +56,56 @@ class Editor {
         if (this.keybinds == "normal") this.editor.setKeyboardHandler("");
         else                           this.editor.setKeyboardHandler(`ace/keyboard/${this.keybinds}`);
     }
+
+    _makeNewSession(contents, path) {
+        let session = ace.createEditSession(contents, "ace/mode/onyx");
+        session.on("change", this.markTabAsUnsaved.bind(this, path));
+
+        return session;
+    }
+
+    saveTabState() {
+        localStorage.setItem("editor_tabs", JSON.stringify(
+            this.tabs.map(x => ({
+                name: x.name,
+                path: x.path,
+                saved: x.saved,
+                selected: x.selected
+            }))
+        ));
+    }
+
+    restoreTabState(getContentsForPath) {
+        let state = localStorage.getItem("editor_tabs");
+        if (state != null) {
+            this.tabs = JSON.parse(state);
+        } else {
+            this.tabs = [];
+        }
+
+        this.tabs.forEach(tab => {
+            tab.session = this._makeNewSession(getContentsForPath(tab.path), tab.path)
+        });
+
+        this._rebuildTabBar();
+
+        this.switchToTab(this.tabs.findIndex(x => x.selected));
+    }
     
     switchToTab(index) {
         this.tabContainer.children().removeClass("selected");
+        this.tabs.forEach(x => x.selected = false);
 
         this.selectedTab = index;
         this.tabContainer.children()
             .eq(index)
             .addClass("selected")
-            [0].scrollIntoView();
+            [0].scrollIntoView(false);
 
         this.editor.setSession(this.tabs[index].session);
+        this.tabs[index].selected = true;
+
+        this.saveTabState();
     }
 
     openOrSwitchToTab(filepath, shortname, getContents) {
@@ -72,9 +116,11 @@ class Editor {
         }
 
         let newtab = {
-            session: new ace.createEditSession(getContents(), "ace/mode/onyx"),
+            session: this._makeNewSession(getContents(), filepath),
             name: shortname,
-            path: filepath
+            path: filepath,
+            saved: true,
+            selected: false
         };
 
         this.tabs.push(newtab);
@@ -84,11 +130,21 @@ class Editor {
         this.switchToTab(this.tabs.length - 1);
     }
 
+    markTabAsUnsaved(filepath) {
+        let match = this.tabs.findIndex(x => x.path == filepath);
+        if (match < 0) {
+            return;
+        }
+
+        this.tabs[match].saved = false;
+        $(`.tab[data-tabindex="${match}"]`).attr("data-unsaved", "true");
+    }
+
     _rebuildTabBar() {
         let newContent = "";
         this.tabs.forEach((tab, index) => {
             newContent += `
-                <div class="tab" data-tabindex="${index}">
+                <div class="tab ${tab.selected ? "selected" : ""}" data-tabindex="${index}" data-unsaved="${!tab.saved}">
                     ${tab.name}
                     <i class="close-button fa fa-close"></i>
                 </div>
@@ -111,6 +167,9 @@ class Editor {
         if (this.tabs.length == 1) return;
 
         // TODO: Check for unsaved changes!
+        if (!this.tabs[index].saved) {
+            if (!confirm("There are unsaved changes. Are you sure you want to close it?")) return;
+        }
 
         this.tabs[index].session.destroy();
 
@@ -119,5 +178,29 @@ class Editor {
 
         this._rebuildTabBar();
         this.switchToTab(this.selectedTab);
+    }
+
+    saveTab(filepath, save_func) {
+        // TODO: Consider renaming tabs here...
+        let match = this.tabs.findIndex(x => x.path == filepath);
+        if (match < 0) {
+            return;
+        }
+
+        if (save_func(this.tabs[match].session.getValue())) {
+            this.tabs[match].saved = true;
+            $(`.tab[data-tabindex="${match}"]`).attr("data-unsaved", "false");
+        }
+    }
+
+    saveAllTabs(save_func) {
+        this.tabs.forEach((tab, index) => {
+            if (tab.saved) return;
+
+            if (save_func(tab.path, tab.session.getValue())) {
+                tab.saved = true;
+                $(`.tab[data-tabindex="${index}"]`).attr("data-unsaved", "false");
+            }
+        });
     }
 }
