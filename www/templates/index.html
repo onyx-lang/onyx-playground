@@ -27,7 +27,7 @@
     <body id="body">
         <div id="simple-menubar" class="menu-bar">
             <div class="floating-container">
-                <button title="Run"      style="background-color: #abcd34" class="run-button" onclick="submit_code()"><i class="fas fa-play"></i></button>
+                <button title="Run"      style="background-color: #abcd34" class="run-button" onclick="submit_code_wrapper()"><i class="fas fa-play"></i></button>
                 <button title="Stop"     style="background-color: #cd3434" onclick="kill_code()"><i class="fas fa-stop"></i></button>
                 <button title="Save"     style="background-color: #3467cd" onclick="prompt_save()"><i class="fas fa-save"></i></button>
                 <button title="Load"     style="background-color: #3467cd" onclick="prompt_load()"><i class="fas fa-folder"></i></button>
@@ -107,6 +107,7 @@
         </div>
 
         <input id="fileupload" style="display:none" type="file" onchange="file_uploaded(event)"/>
+        <input id="projectupload" style="display:none" type="file" accept="application/json" onchange="folder_project_uploaded(event)" />
 
         <div id="settings-modal" class="modal">
             <h2>Settings</h2>
@@ -219,6 +220,9 @@
 
             <p>Load existing project</p>
             <div class="project-list"> </div>
+
+            <p>Upload existing roject</p>
+            <button onclick="folder_project_start_upload()">Upload</button>
         </div>
 
         <div id="context-menu" class="hidden">

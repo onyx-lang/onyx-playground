@@ -5,6 +5,7 @@ class FolderSystem {
         this.folders = [];
 
         this.currentProject = "";
+        this.compilationTarget = "";
     }
 
     _getPathParts(path) {
@@ -118,13 +119,14 @@ class FolderSystem {
 
         if (existing == null) return;
 
+        editor.closeTabByPath(old_path);
+        this.remove(old_path);
+
         if (existing.type == "file") {
-            editor.closeTabByPath(old_path);
-            this.remove(old_path);
             this.create_file(new_path, existing.contents);
         } else {
-            let dirname = new_path.substring(new_path.lastIndexOf("/") + 1);
-            existing.name = dirname;
+            let newdir = this.create_directory(new_path);
+            newdir.elems = existing.elems;
         }
     }
 
@@ -147,7 +149,7 @@ class FolderSystem {
                     })
 
                     if (name != undefined) {
-                        output += `<div class="folder-item directory ${t.state}" data-filename="${name}">
+                        output += `<div class="folder-item directory ${t.state}" data-filename="${name}" draggable="true">
                         <i class="fa ${t.state == "open" ? "fa-folder-open" : "fa-folder"}"></i>
                         ${t.name}
                         </div>`;
@@ -167,9 +169,10 @@ class FolderSystem {
                 }
 
                 case "file": {
-                    output += `<div class="folder-item file" data-filename="${name}">
+                    output += `<div class="folder-item file" data-filename="${name}" draggable="true">
                     <i class="fa fa-file"></i>
                     ${t.name}
+                    ${name == this.compilationTarget ? "<i class='fa fa-bullseye'></i>" : ""}
                     </div>`;
                     break;
                 }
@@ -186,16 +189,34 @@ class FolderSystem {
         ` + root_html;
 
         $root.html(root_html);
+
+        $(".folder-item").on("dragstart", folder_start_drag);
+        $(".folder-item").on("dragover", folder_start_drag_hover);
+        $(".folder-item").on("dragleave", folder_stop_drag_hover);
+        $(".folder-item").on("drop", folder_stop_drag);
+    }
+
+    createRestorePointString() {
+        return JSON.stringify({
+            name: this.currentProject,
+            editor: editor.getTabState(),
+            compilationTarget: this.compilationTarget,
+            files: this.folders
+        });
+    }
+
+    restoreFromString(project_string) {
+        let project = JSON.parse(project_string);
+        this.folders = project.files;
+        this.compilationTarget = project.compilationTarget;
+        this.currentProject = project.name;
+        editor.setTabState(project.editor, _get_contents_for_file);
     }
 
     save(project_name) {
         localStorage["filesystem"] = JSON.stringify(this.folders);
 
-        let project = JSON.stringify({
-            editor: editor.getTabState(),
-            files: this.folders
-        });
-
+        let project = this.createRestorePointString();
         if (project_name) {
             localStorage["project_" + project_name] = project;
         }
@@ -212,9 +233,7 @@ class FolderSystem {
         }
 
         if (`project_${project_name}` in localStorage) {
-            let project = JSON.parse(localStorage[`project_${project_name}`]);
-            this.folders = project.files;
-            editor.setTabState(project.editor, _get_contents_for_file);
+            this.restoreFromString(localStorage[`project_${project_name}`]);
             return true;
         }
 
@@ -356,18 +375,18 @@ function folder_rebuild_view() {
             <i class="fa fa-folder-plus"></i>
             New Folder
         </div>
-    `));
+    `, ($cm, e) => $cm.attr("data-filename", "")));
 
     $(".folder-item").on("click", folder_item_click);
 
     $(".folder-item.file").on("contextmenu", folder_context_menu(`
+        <div onclick="folder_context_menu_close(); folder_set_compilation_target(event)">
+            <i class="fa fa-bullseye"></i>
+            Set as compilation target
+        </div>
         <div onclick="folder_context_menu_close(); folder_start_rename(event)">
             <i class="fa fa-pencil"></i>
             Rename
-        </div>
-        <div>
-            <i class="fa fa-folder"></i>
-            Move
         </div>
         <div onclick="folder_context_menu_close(); folder_duplicate(event)">
             <i class="fa fa-copy"></i>
@@ -543,6 +562,8 @@ function folder_finalize_remove() {
     let $modal = $("#remove-modal");
     let filename = $modal.attr("data-filename");
 
+    editor.closeTabByPath(filename);
+
     folders.remove(filename);
     folders.save();
     folder_rebuild_view();
@@ -564,37 +585,53 @@ function folder_open_project_modal() {
     }
 
     projects.sort();
-    projects.forEach((project, index) => {
-        let $button = $(`<button class='project-select'>${project}</button>`);
+    projects.forEach(project => {
+        let $container = $(`<div class="list-container"></div>`);
+
+        let $button = $(`<button class='select'>${project}</button>`);
         $button.on('click', ev => {
             folders.switchProject(ev.target.textContent);
             folder_rebuild_view();
             $.modal.close();
         });
 
-        let $delete_button = $(`<button class='project-delete'><i class='fas fa-trash'></i></button>`);
+        let $download_button = $(`<button class='download'><i class='fas fa-download'></i></button>`);
+        $download_button.on('click', ev => {
+            if (!ev.target.previousElementSibling) return;
+
+            let name = ev.target.previousElementSibling.textContent;
+            // Kind of a hack, but it works
+            let tmp_folders = new FolderSystem();
+            tmp_folders.switchProject(name);
+            _download_file(`${name}.json`, tmp_folders.createRestorePointString());
+        });
+
+        let $delete_button = $(`<button class='delete'><i class='fas fa-trash'></i></button>`);
         $delete_button.on('click', ev => {
             if (confirm("Are you sure you want to delete this project?")) {
                 folders.deleteProject(
-                    ev.target.previousSibling.textContent
+                    ev.target.previousElementSibling.previousElementSibling.textContent
                 );
 
-                ev.target.previousSibling.remove();
-                ev.target.remove();
+                ev.target.parentNode.remove();
             }
         });
 
-        $list.append($button);
-        $list.append($delete_button);
+        $container.append($button);
+        $container.append($download_button);
+        $container.append($delete_button);
+        $list.append($container);
     });
 
     $("#project-modal").modal();
 }
 
 function folder_create_project() {
+    let name = $("#project-name").val();
+    if (name == "") return;
+
     $.modal.close();
 
-    let name = $("#project-name").val();
     folders.switchProject(name);
     folders.save(name);
     folder_rebuild_view();
@@ -609,13 +646,15 @@ function folder_duplicate(e) {
 
 async function folder_handle_drop(e) {
     e.preventDefault();
-    if (e.dataTransfer.items.length == 0) return;
+    if (e.dataTransfer.items.length == 0) {
+        return folder_stop_drag(e);
+    }
 
     let parent;
     if (e.target.classList.contains("directory")) {
         parent = e.target.getAttribute("data-filename") ?? "/";
     } else {
-        parent = e.target.closest(".folder")?.previousSibling?.getAttribute("data-filename") ?? "/";
+        parent = e.target.closest(".folder")?.previousElementSibling?.getAttribute("data-filename") ?? "/";
     }
 
     let file = await e.dataTransfer.items[0].getAsFile();
@@ -631,12 +670,16 @@ function folder_prompt_download(e) {
     let file = folders.lookup(filename);
     if (file == null) return;
 
-    let blob = new Blob([ file.contents ], {
+    _download_file(file.name, file.contents);
+}
+
+function _download_file(name, contents) {
+    let blob = new Blob([ contents ], {
         type: 'text/plain'
     });
 
     let download_link = document.createElement('a');
-    download_link.download = file.name;
+    download_link.download = name;
     download_link.href = window.URL.createObjectURL(blob);
     download_link.onclick = function(e) {
         // revokeObjectURL needs a delay to work properly
@@ -649,6 +692,72 @@ function folder_prompt_download(e) {
     download_link.remove();
 }
 
+function folder_project_start_upload() {
+    $("#projectupload").click();
+}
+
+function folder_project_uploaded(ev) {
+    let file = ev.target.files[0];
+
+    let reader = new FileReader();
+    reader.readAsText(file, 'UTF-8');
+    reader.onload = readerEvent => {
+        let contents = readerEvent.target.result;
+        let tmp_folders = new FolderSystem();
+        tmp_folders.restoreFromString(contents);
+        tmp_folders.save();
+
+        folders.switchProject(tmp_folders.currentProject);
+        folder_rebuild_view();
+        $.modal.close();
+    }
+}
+
+function folder_set_compilation_target(e) {
+    let filename = $(e.target).parent().attr("data-filename");
+    folders.compilationTarget = filename;
+    folders.save();
+    folder_rebuild_view();
+}
+
+let grabbed_elem = null;
+function folder_start_drag(e) {
+    grabbed_elem = e.target;
+}
+
+function folder_start_drag_hover(e) {
+    e.target.classList.add("drag-target");
+    e.preventDefault();
+}
+
+function folder_stop_drag_hover(e) {
+    e.target.classList.remove("drag-target");
+}
+
+function folder_stop_drag(e) {
+    e.preventDefault();
+    if (grabbed_elem == null) return;
+
+    e.target.classList.remove("drag-target");
+
+    let old_path = grabbed_elem.getAttribute("data-filename");
+    if (!old_path) return;
+        
+    let filename = old_path.substring(old_path.lastIndexOf("/") + 1);
+
+    let new_path = null;
+    if (e.target.classList.contains("directory")) {
+        new_path = e.target.getAttribute("data-filename") + "/" + filename;
+    } else if (e.target.classList.contains("folder-root")) {
+        new_path = "/" + filename;
+    }
+
+    if (new_path) {
+        folders.move_file(old_path, new_path);
+        folders.save();
+        folder_rebuild_view();
+    }
+}
 
 function folder_save_current_file() {
     let filepath = editor.getActiveFilePath();
@@ -676,7 +785,41 @@ function folder_save_all_files() {
     folders.save();
 }
 
+function _convert_folders_into_payload(root, output) {
+    switch (root.type) {
+        case 'file':
+            output[root.name] = root.contents;
+            break;
+
+        case 'dir':
+            output[root.name] = {};
+            for (let elem of root.elems) {
+                _convert_folders_into_payload(elem, output[root.name]);
+            }
+
+            break;
+    }
+}
+
 function folder_run() {
     folder_save_all_files();
-    submit_code();
+
+    submit_code(() => {
+        let payload = {};
+        
+        payload.config = {
+            source_files: [folders.compilationTarget]
+        };
+
+        _convert_folders_into_payload({type: 'dir', name: 'files', elems: folders.folders}, payload);
+        
+        return fetch(window.ROOT_ENDPOINT + "/compile_v2", {
+            method: 'POST',
+            cache:  'no-cache',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body:   JSON.stringify(payload),
+        });
+    });
 }

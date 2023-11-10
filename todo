@@ -6,11 +6,10 @@
 - [x] Popup input box when needed
 
 - [ ] Rename IDE mode to Project mode
-    - [ ] Right click menu
+    - [x] Right click menu
         - [x] New file
         - [x] New folder
         - [x] New file/folder in folder
-        - [ ] Move
         - [x] Duplicate
     - [x] Tabbed code view
     - [x] File saving happens per tab
@@ -18,16 +17,19 @@
         - [x] Save everything on run
     - [x] Ctrl+s to save
     - [x] Drag/Drop upload files
+        - [x] Interface highlighting for where it will be dropped
     - [x] Download
-    - [ ] Projects
+    - [x] Projects
         - [x] Editor should be able to be empty
         - [x] Editor tabs are per project
         - [x] Files are per project
         - [x] Multiple projects are stored in LS
-        - [ ] Projects can be exported and imported
-        - [ ] Compiling is per project (all files are sent and a specific file is compiled)
+        - [x] Projects can be exported and imported
+        - [x] Compiling is per project (all files are sent and a specific file is compiled)
     - [ ] JS Virtual Filesystem
         - [ ] Support Files in JS platform layer
+    - [ ] Fix up simple mode
+        - [ ] Many things were broken in this process...
 
 
 - [ ] Hide Canvas/Output

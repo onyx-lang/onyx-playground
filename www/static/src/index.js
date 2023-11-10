@@ -77,21 +77,13 @@ async function run_wasm(wasm_bytes) {
     update_running_msg();
 }
 
-async function submit_code() {
+async function submit_code(make_request) {
     if (wasm_worker != null) return;
 
     clear_output();
     quick_save();
-    let code = editor.getText();
 
-    let response = await fetch(window.ROOT_ENDPOINT + "/compile", {
-        method: 'POST',
-        cache:  'no-cache',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body:   JSON.stringify({ code }),
-    });
+    let response = await make_request();
 
     if (response.status == 200) {
         // Successful compile
@@ -124,6 +116,21 @@ async function submit_code() {
 
         editor.setAnnotations(annotations);
     }
+}
+
+function submit_code_wrapper() {
+    submit_code(() => {
+        let code = editor.getText();
+
+        return fetch(window.ROOT_ENDPOINT + "/compile", {
+            method: 'POST',
+            cache:  'no-cache',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body:   JSON.stringify({ code }),
+        });
+    });
 }
 
 async function kill_code() {

@@ -52,6 +52,35 @@ load_example :: (req: &Request, res: &Response) {
     res->end();
 }
 
+#local
+run_compile_command :: (target: str, source_files: [] str, working_dir: str) -> Result(void, str) {
+    args := make([..] str);
+    array.concat(&args, .[
+        "-s", "KILL", "10s",
+        "onyx", "build", "-r", "js",
+        "--no-file-contents", "--no-colors", 
+    ]);
+
+    array.concat(&args, .[ "-o", target ]);
+
+    for source_files {
+        array.push(&args, it);
+    }
+
+    compile_process := os.process_spawn(
+        "timeout", args,
+        starting_directory=working_dir
+    );
+
+    compile_reader := io.reader_make(&compile_process);
+    compile_output := compile_reader->read_all();
+
+    switch os.process_wait(&compile_process) {
+        case .Success do return .{ Ok = .{} };
+        case .Error   do return .{ Err = compile_output };
+    }
+}
+
 @route.{.POST, "/compile"}
 compile_onyx :: (req: &Request, res: &Response) {
     body := req.body->json()?;
@@ -63,32 +92,88 @@ compile_onyx :: (req: &Request, res: &Response) {
                 io.stream_write(it, code);
             }
             
-            compile_process := os.process_spawn(
-                "timeout", .[
-                    "-s", "KILL", "10s",
-                    "onyx", "build", "-r", "js",
-                    "--no-file-contents", "--no-colors", 
-                    "-o", string.advance(wasm_file, "compilation/".count),
+            compile_result := run_compile_command(
+                target = string.advance(wasm_file, "compilation/".count),
+                source_files = .[
                     string.advance(code_file, "compilation/".count),
-                    "./read_line.onyx", "./canvas.onyx",
+                    "./read_line.onyx",
+                    "./canvas.onyx"
                 ],
-                starting_directory="compilation"
+                working_dir = "compilation/"
             );
 
-            compile_reader := io.reader_make(&compile_process);
-            compile_output := compile_reader->read_all();
-            // logf(.Info, compile_output);
-            
-            switch os.process_wait(&compile_process) {
-                case .Success {
+            switch compile_result {
+                case .Ok {
                     res->file(wasm_file);
                     res->status(200);
                 }
 
-                case .Error {
-                    res->body("text/plain", compile_output);
+                case output: .Err {
+                    res->body("text/plain", output);
                     res->status(500);
                 }
+            }
+        }
+
+        res->end();
+    }
+}
+
+@route.{.POST, "/compile_v2"}
+compile_onyx_project :: (req: &Request, res: &Response) {
+    body := req.body->json()?;
+
+    temp_directory_name := random.string(32, alpha_numeric=true);
+    temp_directory := os.path_join("compilation", temp_directory_name);
+    os.dir_create(temp_directory);
+    defer os.remove_directory(temp_directory);
+
+    build_project_dir :: (root: encoding.json.Value, current_dir: str) {
+        for root->as_map_iter() {
+            path := os.path_join(current_dir, it.first);
+
+            switch it.second->type() {
+                case .String {
+                    for file: os.with_file(path, .Write) {
+                        io.stream_write(file, it.second->as_str());
+                    }
+                }
+
+                case .Object {
+                    os.dir_create(path);
+                    build_project_dir(it.second, path);
+                }
+            }
+        }
+    }
+
+    build_project_dir(body.root["files"], temp_directory);
+
+    for wasm_file: temp_file(".wasm", temp_directory) {
+        source_files := iter.comp(
+            body.root["config"]["source_files"]->as_array_iter(),
+            [](it->as_str())
+        );
+
+        source_files << "../read_line.onyx";
+        source_files << "../canvas.onyx";
+
+        _, target := os.path_split(wasm_file);
+        compile_result := run_compile_command(
+            target = target,
+            source_files = source_files,
+            working_dir = temp_directory
+        );
+
+        switch compile_result {
+            case .Ok {
+                res->file(wasm_file);
+                res->status(200);
+            }
+
+            case output: .Err {
+                res->body("text/plain", output);
+                res->status(500);
             }
         }
 
@@ -206,6 +291,7 @@ setup_templates :: () {
 }
 
 main :: () {
+    random.set_seed(os.time());
     setup_templates();
 
     pipeline := setup_server();
@@ -213,8 +299,8 @@ main :: () {
     tcp_server->serve(4000);
 }
     
-temp_file :: (extension: str) => iter.single(
-    tprintf("compilation/{}{}", random.string(16, alpha_numeric=true), extension),
+temp_file :: (extension: str, prefix := "compilation") => iter.single(
+    tprintf("{}/{}{}", prefix, random.string(16, alpha_numeric=true), extension),
     filename => {
         os.remove_file(filename);
     }

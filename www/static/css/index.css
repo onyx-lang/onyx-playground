@@ -378,25 +378,34 @@ select:hover {
     overflow: auto;
 }
 
-.modal .file-list button, .modal .project-list button {
-    display: block;
+.modal .list-container {
+    display: flex;
+    flex-direction: row;
     width: 100%;
 }
 
-.modal .file-list .file-select, .modal .project-list .project-select {
-    float: left;
-    width: 85%;
+.modal .list-container button {
+    min-width: 48px;
 }
 
-.modal .file-list .file-delete, .modal .project-list .project-delete  {
-    float: left;
-    width: 15%;
+.modal .list-container .select {
+    flex-grow: 1; 
+}
 
+.modal .list-container .delete {
     background: #802424;
 }
 
-.modal .file-list .file-delete:hover, .modal .project-list .project-delete:hover {
+.modal .list-container .delete:hover {
     background: #a04444;
+}
+
+.modal .list-container .download {
+    background: #3476cd;
+}
+
+.modal .list-container .download:hover {
+    background: #4692de;
 }
 
 .settings-grid {
@@ -478,14 +487,8 @@ select:hover {
     background-color: var(--active-color);
 }
 
-.folder-item > .folder-item-button {
-    opacity: 0;
-    float: right;
-    transition: all 200ms;
-}
-
-.folder-item:hover > .folder-item-button {
-    opacity: 1;
+.folder-item.drag-target {
+    background-color: var(--active-color);
 }
 
 .folder {
@@ -513,7 +516,6 @@ select:hover {
 }
 
 .folder-project-name {
-    text-align: center;
     text-transform: uppercase;
     font-weight: 800;
     padding: var(--box-padding);
