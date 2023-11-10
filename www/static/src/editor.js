@@ -1,5 +1,6 @@
 class Editor {
     constructor(target_id) {
+        this.target_id = target_id;
         this.editor = ace.edit(target_id);
 
         this.setTheme("chrome");
@@ -10,8 +11,8 @@ class Editor {
         this.editor.getSession().setMode("ace/mode/onyx");
         
         this.tabs = [];
-        this.selectedTab = -1;
         this.tabContainer = $("#tab-container");
+        this.switchToTab(-1);
 
         this.tabContainer.on("wheel", e => {
             e = e.originalEvent;
@@ -64,24 +65,20 @@ class Editor {
         return session;
     }
 
-    saveTabState() {
-        localStorage.setItem("editor_tabs", JSON.stringify(
-            this.tabs.map(x => ({
-                name: x.name,
-                path: x.path,
-                saved: x.saved,
-                selected: x.selected
-            }))
-        ));
+    getTabState() {
+        return this.tabs.map(x => ({
+            name: x.name,
+            path: x.path,
+            saved: true,
+            selected: x.selected
+        }));
     }
 
-    restoreTabState(getContentsForPath) {
-        let state = localStorage.getItem("editor_tabs");
-        if (state != null) {
-            this.tabs = JSON.parse(state);
-        } else {
-            this.tabs = [];
-        }
+    /**
+     * @param state Array of tabs, as returned from `getTabState`
+     */
+    setTabState(state, getContentsForPath) {
+        this.tabs = state ?? [];
 
         this.tabs.forEach(tab => {
             tab.session = this._makeNewSession(getContentsForPath(tab.path), tab.path)
@@ -93,19 +90,21 @@ class Editor {
     }
     
     switchToTab(index) {
+        this._hideEditor(index < 0);
+
         this.tabContainer.children().removeClass("selected");
         this.tabs.forEach(x => x.selected = false);
 
         this.selectedTab = index;
-        this.tabContainer.children()
-            .eq(index)
-            .addClass("selected")
-            [0].scrollIntoView(false);
+        if (index >= 0) {
+            this.tabContainer.children()
+                .eq(index)
+                .addClass("selected")
+                [0].scrollIntoView(false);
 
-        this.editor.setSession(this.tabs[index].session);
-        this.tabs[index].selected = true;
-
-        this.saveTabState();
+            this.editor.setSession(this.tabs[index].session);
+            this.tabs[index].selected = true;
+        }
     }
 
     openOrSwitchToTab(filepath, shortname, getContents) {
@@ -160,13 +159,18 @@ class Editor {
         });
     }
 
+    closeTabByPath(path) {
+        let match = this.tabs.findIndex(x => x.path == path);
+        if (match < 0) {
+            return;
+        }
+
+        this.closeTab(match);
+    }
+
     closeTab(index) {
         if (index >= this.tabs.length) return;
 
-        // Can't close the last open file
-        if (this.tabs.length == 1) return;
-
-        // TODO: Check for unsaved changes!
         if (!this.tabs[index].saved) {
             if (!confirm("There are unsaved changes. Are you sure you want to close it?")) return;
         }
@@ -202,5 +206,15 @@ class Editor {
                 $(`.tab[data-tabindex="${index}"]`).attr("data-unsaved", "false");
             }
         });
+    }
+
+    _hideEditor(hidden) {
+        if (hidden) {
+            $(`#${this.target_id}`).hide();
+            $(`#no-editor-open`).show();
+        } else {
+            $(`#${this.target_id}`).show();
+            $(`#no-editor-open`).hide();
+        }
     }
 }

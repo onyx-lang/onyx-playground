@@ -3,6 +3,8 @@
 class FolderSystem {
     constructor() {
         this.folders = [];
+
+        this.currentProject = "";
     }
 
     _getPathParts(path) {
@@ -117,6 +119,7 @@ class FolderSystem {
         if (existing == null) return;
 
         if (existing.type == "file") {
+            editor.closeTabByPath(old_path);
             this.remove(old_path);
             this.create_file(new_path, existing.contents);
         } else {
@@ -179,46 +182,80 @@ class FolderSystem {
         let root_html = build(root);
 
         $root.html(root_html);
-        // $root.find(".folder-item i.fa-pencil-alt").click(folder_start_rename);
-        // $root.find(".folder-item i.fa-trash").click(folder_start_remove);
-        // <i class="folder-item-button fa fa-trash"></i>
-        // <i class="folder-item-button fa fa-pencil-alt"></i>
     }
 
-    save() {
+    save(project_name) {
         localStorage["filesystem"] = JSON.stringify(this.folders);
+
+        let project = JSON.stringify({
+            editor: editor.getTabState(),
+            files: this.folders
+        });
+
+        if (project_name) {
+            localStorage["project_" + project_name] = project;
+        }
+
+        if (this.currentProject) {
+            localStorage["project_" + this.currentProject] = project;
+        }
     }
 
-    restore() {
-        if ("filesystem" in localStorage) {
+    restore(project_name) {
+        if (!project_name && "filesystem" in localStorage) {
             this.folders = JSON.parse(localStorage["filesystem"]);
             return true;
         }
 
+        if (`project_${project_name}` in localStorage) {
+            let project = JSON.parse(localStorage[`project_${project_name}`]);
+            this.folders = project.files;
+            editor.setTabState(project.editor, _get_contents_for_file);
+            return true;
+        }
+
+        this.folders = [];
+        editor.setTabState([], _get_contents_for_file);
         return false;
+    }
+
+    switchProject(project_name) {
+        if (this.currentProject) {
+            this.save(this.currentProject);
+        }
+
+        this.currentProject = project_name;
+        if (this.currentProject) {
+            this.restore(this.currentProject);
+        }
+
+        localStorage["recent_project"] = project_name;
+    }
+
+    openRecentProject() {
+        this.switchProject(localStorage["recent_project"] ?? "");
+    }
+    
+    deleteProject(project_name) {
+        localStorage.removeItem(`project_${project_name}`);
+
+        if (project_name == this.currentProject) {
+            // TODO Handle the case where you are deleting the current project...
+        }
     }
 }
 
 async function enable_ide_mode() {
     $("#simple-menubar").addClass("hidden");
-    // $("#ide-menubar").removeClass("hidden");
     $("#folder-view").removeClass("hidden");
     $("#main-horizontal-divider").removeClass("hidden");
 
-    localStorage.setItem("folder-width", "25%");
-    $(":root").css("--folder-width", localStorage.getItem("folder-width"));
+    $(":root").css("--folder-width", localStorage.getItem("folder-width") ?? "25%");
     $(":root").css("--top-menu-bar-height", "0px");
 
     folders = new FolderSystem();
-    folders.restore();
+    folders.openRecentProject();
     folder_rebuild_view();
-
-    editor.restoreTabState(path => {
-        let file = folders.lookup(path);
-        if (file) return file.contents;
-
-        return "";
-    });
 
     document.addEventListener("keydown", ctrlSHandler);
     
@@ -243,7 +280,7 @@ function disable_ide_mode() {
 
     document.removeEventListener("keydown", ctrlSHandler);
 
-    editor.saveTabState();
+    folders.save();
 }
 
 function ctrlSHandler(e) {
@@ -252,6 +289,13 @@ function ctrlSHandler(e) {
         e.preventDefault();
         return false;
     }
+}
+
+function _get_contents_for_file(path) {
+    let file = folders.lookup(path);
+    if (file) return file.contents;
+
+    return "";
 }
 
 async function populate_examples_folder() {
@@ -305,7 +349,7 @@ function folder_rebuild_view() {
             New File
         </div>
         <div onclick="folder_context_menu_close(); folder_start_create('directory', event)">
-            <i class="fa fa-plus"></i>
+            <i class="fa fa-folder-plus"></i>
             New Folder
         </div>
     `));
@@ -325,6 +369,10 @@ function folder_rebuild_view() {
             <i class="fa fa-copy"></i>
             Duplicate
         </div>
+        <div onclick="folder_context_menu_close(); folder_prompt_download(event)">
+            <i class="fa fa-download"></i>
+            Download
+        </div>
         <div onclick="folder_context_menu_close(); folder_start_remove(event)">
             <i class="fa fa-trash"></i>
             Delete
@@ -341,7 +389,7 @@ function folder_rebuild_view() {
             New File
         </div>
         <div onclick="folder_context_menu_close(); folder_start_create('directory', event)">
-            <i class="fa fa-plus"></i>
+            <i class="fa fa-folder-plus"></i>
             New Folder
         </div>
         <div onclick="folder_context_menu_close(); folder_start_remove(event)">
@@ -360,9 +408,11 @@ function folder_context_menu(menu_contents, attachData) {
 
         $cm.html(menu_contents);
 
-        $(document.body).append(`
-            <div id="context-menu-closer" style="position: fixed; z-index: 9999; top: 0; right: 0; left: 0; bottom: 0;"></div>
-        `);
+        if ($("#context-menu-closer")[0] == null) {
+            $(document.body).append(`
+                <div id="context-menu-closer" style="position: fixed; z-index: 9999; top: 0; right: 0; left: 0; bottom: 0;"></div>
+            `);
+        }
 
         $("#context-menu-closer")
             .on("click", folder_context_menu_close)
@@ -423,7 +473,7 @@ function folder_start_create(type, event) {
 
     if (!$modal) return;
 
-    $modal.find("input").val("");
+    $modal.find("input").val("").focus();
     $modal.find(".create-base-path").html("/" + (event.target.parentNode.getAttribute("data-filename") ?? ""));
     $modal.modal();
 }
@@ -459,7 +509,7 @@ function folder_finalize_create(type) {
 function folder_start_rename(e) {
     let filename = $(e.target).parent().attr("data-filename");
     let $modal = $("#rename-modal");
-    $modal.find("input").val(filename);
+    $modal.find("input").val(filename).focus();
     $modal.attr("data-filename", filename);
     $modal.modal();
 }
@@ -496,6 +546,56 @@ function folder_finalize_remove() {
     $.modal.close();
 }
 
+function folder_open_project_modal() {
+    $(".project-list").empty();
+
+    let projects = [];
+    let $list = $(".project-list");
+    for (let i=0; i < localStorage.length; i++) {
+        let name = localStorage.key(i);
+        if (name.startsWith("project_")) {
+            let project_name = name.substring(8);
+            projects.push(project_name);
+        }
+    }
+
+    projects.sort();
+    projects.forEach((project, index) => {
+        let $button = $(`<button class='project-select'>${project}</button>`);
+        $button.on('click', ev => {
+            folders.switchProject(ev.target.textContent);
+            folder_rebuild_view();
+            $.modal.close();
+        });
+
+        let $delete_button = $(`<button class='project-delete'><i class='fas fa-trash'></i></button>`);
+        $delete_button.on('click', ev => {
+            if (confirm("Are you sure you want to delete this project?")) {
+                folders.deleteProject(
+                    ev.target.previousSibling.textContent
+                );
+
+                ev.target.previousSibling.remove();
+                ev.target.remove();
+            }
+        });
+
+        $list.append($button);
+        $list.append($delete_button);
+    });
+
+    $("#project-modal").modal();
+}
+
+function folder_create_project() {
+    $.modal.close();
+
+    let name = $("#project-name").val();
+    folders.switchProject(name);
+    folders.save(name);
+    folder_rebuild_view();
+}
+
 function folder_duplicate(e) {
     let filename = $(e.target).parent().attr("data-filename");
     folders.create_file(filename + " copy", folders.lookup(filename)?.contents ?? "");
@@ -521,6 +621,30 @@ async function folder_handle_drop(e) {
 
     return false;
 }
+
+function folder_prompt_download(e) {
+    let filename = $(e.target).parent().attr("data-filename");
+    let file = folders.lookup(filename);
+    if (file == null) return;
+
+    let blob = new Blob([ file.contents ], {
+        type: 'text/plain'
+    });
+
+    let download_link = document.createElement('a');
+    download_link.download = file.name;
+    download_link.href = window.URL.createObjectURL(blob);
+    download_link.onclick = function(e) {
+        // revokeObjectURL needs a delay to work properly
+        setTimeout(() => {
+            window.URL.revokeObjectURL(this.href);
+        }, 1500);
+    };
+
+    download_link.click();
+    download_link.remove();
+}
+
 
 function folder_save_current_file() {
     let filepath = editor.getActiveFilePath();

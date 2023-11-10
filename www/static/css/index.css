@@ -373,29 +373,29 @@ select:hover {
     cursor: not-allowed;
 }
 
-.modal .file-list {
+.modal .file-list, .modal .project-list {
     max-height: 400px;
     overflow: auto;
 }
 
-.modal .file-list button {
+.modal .file-list button, .modal .project-list button {
     display: block;
     width: 100%;
 }
 
-.modal .file-list .file-select {
+.modal .file-list .file-select, .modal .project-list .project-select {
     float: left;
     width: 85%;
 }
 
-.modal .file-list .file-delete {
+.modal .file-list .file-delete, .modal .project-list .project-delete  {
     float: left;
     width: 15%;
 
     background: #802424;
 }
 
-.modal .file-list .file-delete:hover {
+.modal .file-list .file-delete:hover, .modal .project-list .project-delete:hover {
     background: #a04444;
 }
 
@@ -492,7 +492,7 @@ select:hover {
     position: relative;
     left: 14px;
     padding-left: 6px;
-    width: calc(100% - 20px);
+    width: calc(100%);
     overflow-y: auto;
     overflow-x: hidden;
     border-left: 1px solid rgba(0, 0, 0, 0.3);
@@ -558,4 +558,10 @@ select:hover {
 
 #context-menu > div:not(:first-child) {
     border-top: 1px solid rgba(0, 0, 0, 0.4);
+}
+
+#no-editor-open {
+    background: var(--terminal-background-color);
+    width: 100%;
+    height: calc(100% - var(--tab-bar-height));
 }

@@ -323,7 +323,6 @@ function load_split_sizes() {
 
     $root.css("--top-half-height", localStorage.getItem("top-half-height"));
     $root.css("--left-half-width", localStorage.getItem("left-half-width"));
-    $root.css("--folder-width", "0px");
 }
 
 function save_split_sizes() {
@@ -331,6 +330,7 @@ function save_split_sizes() {
 
     localStorage.setItem("top-half-height", $root.css("--top-half-height"));
     localStorage.setItem("left-half-width", $root.css("--left-half-width"));
+    localStorage.setItem("folder-width", $root.css("--folder-width"));
 }
 
 window.onload = () => {
@@ -342,7 +342,7 @@ window.onload = () => {
 
     editor = new Editor("code-editor");
 
-    populate_examples();
+    // populate_examples();
     load_settings();
     if (ui_mode == "simple") {
         quick_load();

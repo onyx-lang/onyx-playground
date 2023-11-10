@@ -18,11 +18,14 @@
         - [x] Save everything on run
     - [x] Ctrl+s to save
     - [x] Drag/Drop upload files
-    - [ ] Download
-    - [ ] Files are per project
-    - [ ] Compiling is per project (all files are sent and a specific file is compiled)
-    - [ ] Multiple projects are stored in LS
-    - [ ] Projects can be exported and imported
+    - [x] Download
+    - [ ] Projects
+        - [x] Editor should be able to be empty
+        - [x] Editor tabs are per project
+        - [x] Files are per project
+        - [x] Multiple projects are stored in LS
+        - [ ] Projects can be exported and imported
+        - [ ] Compiling is per project (all files are sent and a specific file is compiled)
     - [ ] JS Virtual Filesystem
         - [ ] Support Files in JS platform layer
 

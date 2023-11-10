@@ -47,16 +47,19 @@
         <div id="folder-view" class="hidden">
             <div class="menu-bar">
                 <div class="floating-container">
-                    <div>
-                        <button title="Run"      style="background-color: #abcd34" class="run-button" onclick="folder_run()"><i class="fas fa-play"></i></button>
-                        <button title="Stop"     style="background-color: #cd3434" onclick="kill_code()"><i class="fas fa-stop"></i></button>
-                        <!-- <button title="New File" style="background-color: #3467cd" onclick="folder_start_create_file()"><i class="fas fa-plus"></i></button> -->
-                        <button title="Save all"     style="background-color: #3467cd" onclick="folder_save_all_files()"><i class="fas fa-save"></i></button>
-                        <button title="Upload"   style="background-color: #3467cd" onclick="prompt_upload()"><i class="fas fa-upload"></i></button>
-                        <button title="Download" style="background-color: #3467cd" onclick="prompt_download()"><i class="fas fa-download"></i></button>
-                        <a title="Settings" href="#settings-modal" rel="modal:open"><i class="fas fa fa-gears"></i></a>
-                        <a title="Package Reference" href="https://docs.onyxlang.io/packages/core" target="_blank"><i class="fas fa fa-cube"></i></a>
-                        <a title="Book" href="https://docs.onyxlang.io/book" target="_blank"><i class="fas fa fa-book"></i></a>
+                    <div style="display: flex; justify-content: space-between;">
+                        <div>
+                            <button title="New Project" style="background-color: #3467cd" onclick="folder_open_project_modal()"><i class="fas fa-project-diagram"></i></button>
+                        </div>
+                        <div>
+                            <button title="Run"  style="background-color: #abcd34" class="run-button" onclick="folder_run()"><i class="fas fa-play"></i></button>
+                            <button title="Stop" style="background-color: #cd3434" onclick="kill_code()"><i class="fas fa-stop"></i></button>
+                        </div>
+                        <div>
+                            <a title="Settings" href="#settings-modal" rel="modal:open"><i class="fas fa fa-gears"></i></a>
+                            <a title="Package Reference" href="https://docs.onyxlang.io/packages/core" target="_blank"><i class="fas fa fa-cube"></i></a>
+                            <a title="Book" href="https://docs.onyxlang.io/book" target="_blank"><i class="fas fa fa-book"></i></a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -77,6 +80,7 @@
                         </div>
                     </div>
                     <pre id="code-editor" ondragover="handle_dragover(event);" ondrop="handle_drop(event);"></pre>
+                    <div id="no-editor-open" style="display: none"></div>
                 </div>
             </div>
 
@@ -206,15 +210,18 @@
             <button onclick="folder_finalize_remove()">Remove</button>
         </div>
 
+        <div id="project-modal" class="modal">
+            <h2>Projects</h2>
+            <p>Create new project</p>
+            <input type="text" id="project-name" name="project-name" placeholder="Name" />
+            <br/>
+            <button onclick="folder_create_project()">Create</button>
+
+            <p>Load existing project</p>
+            <div class="project-list"> </div>
+        </div>
+
         <div id="context-menu" class="hidden">
-            <div>
-                <i class="fa fa-pencil"></i>
-                Edit
-            </div>
-            <div>
-                <i class="fa fa-trash"></i>
-                Delete
-            </div>
         </div>
     </body>
 </html>
