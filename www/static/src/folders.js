@@ -181,6 +181,10 @@ class FolderSystem {
         let root = {type:"dir", elems:this.folders};
         let root_html = build(root);
 
+        root_html = `
+            <div class="folder-project-name">${this.currentProject}</div>
+        ` + root_html;
+
         $root.html(root_html);
     }
 

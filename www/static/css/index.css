@@ -512,6 +512,13 @@ select:hover {
     border-left: none !important;
 }
 
+.folder-project-name {
+    text-align: center;
+    text-transform: uppercase;
+    font-weight: 800;
+    padding: var(--box-padding);
+}
+
 .hidden {
     display: none !important;
 }
