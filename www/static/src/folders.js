@@ -83,7 +83,13 @@ class FolderSystem {
         let dir = this.create_directory(containing_dir);
 
         let filename = path.substring(path.lastIndexOf("/") + 1);
-        dir.elems.splice(dir.elems.findIndex(x => x.name == filename), 1);
+        let index = dir.elems.findIndex(x => x.name == filename);
+        if (index >= 0) {
+            dir.elems.splice(index, 1);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     // Returns null if the item at the path does not exist
@@ -117,7 +123,7 @@ class FolderSystem {
     move_file(old_path, new_path) {
         let existing = this.lookup(old_path);
 
-        if (existing == null) return;
+        if (existing == null) return false;
 
         editor.closeTabByPath(old_path);
         this.remove(old_path);
@@ -128,6 +134,8 @@ class FolderSystem {
             let newdir = this.create_directory(new_path);
             newdir.elems = existing.elems;
         }
+
+        return true;
     }
 
     build_folder_view(selector=".folder-root") {
@@ -739,6 +747,7 @@ function folder_stop_drag(e) {
     if (grabbed_elem == null) return;
 
     e.target.classList.remove("drag-target");
+    if (e.target == grabbed_elem) return;
 
     let old_path = grabbed_elem.getAttribute("data-filename");
     if (!old_path) return;

@@ -59,13 +59,10 @@ run_compile_command :: (target: str, source_files: [] str, working_dir: str) -> 
         "-s", "KILL", "10s",
         "onyx", "build", "-r", "js",
         "--no-file-contents", "--no-colors", 
+        "-o", target, "-DJS_PLATFORM_LAYER_EXTENSIONS",
     ]);
 
-    array.concat(&args, .[ "-o", target ]);
-
-    for source_files {
-        array.push(&args, it);
-    }
+    array.concat(&args, source_files);
 
     compile_process := os.process_spawn(
         "timeout", args,
@@ -97,7 +94,8 @@ compile_onyx :: (req: &Request, res: &Response) {
                 source_files = .[
                     string.advance(code_file, "compilation/".count),
                     "./read_line.onyx",
-                    "./canvas.onyx"
+                    "./canvas.onyx",
+                    "./platform.onyx"
                 ],
                 working_dir = "compilation/"
             );
@@ -157,6 +155,7 @@ compile_onyx_project :: (req: &Request, res: &Response) {
 
         source_files << "../read_line.onyx";
         source_files << "../canvas.onyx";
+        source_files << "../platform.onyx";
 
         _, target := os.path_split(wasm_file);
         compile_result := run_compile_command(
@@ -164,6 +163,8 @@ compile_onyx_project :: (req: &Request, res: &Response) {
             source_files = source_files,
             working_dir = temp_directory
         );
+
+        logf(.Info, "{}", compile_result);
 
         switch compile_result {
             case .Ok {

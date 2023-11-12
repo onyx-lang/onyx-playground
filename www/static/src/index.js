@@ -5,6 +5,7 @@ let ui_mode = "simple";
 
 let input_shared_buffer  = new SharedArrayBuffer(1024 * Uint8Array.BYTES_PER_ELEMENT);
 let canvas_shared_buffer = new SharedArrayBuffer(7 * Int32Array.BYTES_PER_ELEMENT);
+let fs_shared_buffer     = new SharedArrayBuffer(4104 * Uint8Array.BYTES_PER_ELEMENT);
 let folders = null;
 
 async function clear_output() {
@@ -27,6 +28,7 @@ async function run_wasm(wasm_bytes) {
         wasm_worker = null;
     }
     update_running_msg();
+    fs_reset();
 
     input_shared_buffer = new SharedArrayBuffer(1024 * Uint8Array.BYTES_PER_ELEMENT);
     wasm_worker = new Worker(window.ROOT_ENDPOINT + '/static/src/worker.js');
@@ -65,6 +67,11 @@ async function run_wasm(wasm_bytes) {
                 canvas_highlight();
                 break;
             }
+
+            case 'fs': {
+                fs_handler(e.data.data);
+                break;
+            }
         }
     };
 
@@ -72,6 +79,7 @@ async function run_wasm(wasm_bytes) {
         type: 'set_buffers',
         input_buffer:  input_shared_buffer,
         canvas_buffer: canvas_shared_buffer,
+        fs_buffer:     fs_shared_buffer,
     });
     wasm_worker.postMessage({ type: 'start', data: wasm_bytes });
     update_running_msg();
