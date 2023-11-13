@@ -14,7 +14,7 @@
 
         <script> window.ROOT_ENDPOINT = "{% $endpoint %}" </script>
         <script defer src="{% $endpoint %}/static/src/resizer.js"></script>
-        <script defer src="{% $endpoint %}/static/src/storage.js"></script>
+        <!-- <script defer src="{% $endpoint %}/static/src/storage.js"></script> -->
         <script defer src="{% $endpoint %}/static/src/canvas.js"></script>
         <script defer src="{% $endpoint %}/static/src/folders.js"></script>
         <script defer src="{% $endpoint %}/static/src/editor.js"></script>
@@ -28,50 +28,31 @@
     <body id="body">
         <div id="simple-menubar" class="menu-bar">
             <div class="floating-container">
-                <button title="Run"      style="background-color: #abcd34" class="run-button" onclick="submit_code_wrapper()"><i class="fas fa-play"></i></button>
-                <button title="Stop"     style="background-color: #cd3434" onclick="kill_code()"><i class="fas fa-stop"></i></button>
-                <button title="Save"     style="background-color: #3467cd" onclick="prompt_save()"><i class="fas fa-save"></i></button>
-                <button title="Load"     style="background-color: #3467cd" onclick="prompt_load()"><i class="fas fa-folder"></i></button>
-                <button title="Upload"   style="background-color: #3467cd" onclick="prompt_upload()"><i class="fas fa-upload"></i></button>
-                <button title="Download" style="background-color: #3467cd" onclick="prompt_download()"><i class="fas fa-download"></i></button>
-                <a title="Settings" href="#settings-modal" rel="modal:open"><i class="fas fa fa-gears"></i></a>
-                <a title="Package Reference" href="https://docs.onyxlang.io/packages/core" target="_blank"><i class="fas fa fa-cube"></i></a>
-                <a title="Book" href="https://docs.onyxlang.io/book" target="_blank"><i class="fas fa fa-book"></i></a>
-
-                <!-- <label style="margin-left: 64px" for="examples">Load example:</label>
-                <select name="examples" id="examples-selector" onchange="load_example()">
-                    <option value="none">---</option>
-                </select> -->
-            </div>
-        </div>
-        
-        <div id="folder-view" class="hidden">
-            <div class="menu-bar">
-                <div class="floating-container">
-                    <div style="display: flex; justify-content: space-between;">
-                        <div>
-                            <button title="New Project" style="background-color: #3467cd" onclick="folder_open_project_modal()"><i class="fas fa-project-diagram"></i></button>
-                        </div>
-                        <div>
-                            <button title="Run"  style="background-color: #abcd34" class="run-button" onclick="folder_run()"><i class="fas fa-play"></i></button>
-                            <button title="Stop" style="background-color: #cd3434" onclick="kill_code()"><i class="fas fa-stop"></i></button>
-                        </div>
-                        <div>
-                            <a title="Settings" href="#settings-modal" rel="modal:open"><i class="fas fa fa-gears"></i></a>
-                            <a title="Package Reference" href="https://docs.onyxlang.io/packages/core" target="_blank"><i class="fas fa fa-cube"></i></a>
-                            <a title="Book" href="https://docs.onyxlang.io/book" target="_blank"><i class="fas fa fa-book"></i></a>
-                        </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <div>
+                        <button title="New Project" style="background-color: #3467cd" onclick="folder_open_project_modal()"><i class="fas fa-project-diagram"></i></button>
+                    </div>
+                    <div>
+                        <button title="Run"  style="background-color: #abcd34" class="run-button" onclick="folder_run()"><i class="fas fa-play"></i></button>
+                        <button title="Stop" style="background-color: #cd3434" onclick="kill_code()"><i class="fas fa-stop"></i></button>
+                    </div>
+                    <div>
+                        <a title="Settings" href="#settings-modal" rel="modal:open"><i class="fas fa fa-gears"></i></a>
+                        <a title="Package Reference" href="https://docs.onyxlang.io/packages/core" target="_blank"><i class="fas fa fa-cube"></i></a>
+                        <a title="Book" href="https://docs.onyxlang.io/book" target="_blank"><i class="fas fa fa-book"></i></a>
                     </div>
                 </div>
             </div>
-
+        </div>
+        
+        <div id="folder-view">
             <div class="floating-container">
                 <div class="folder-root" ondragover="handle_dragover(event);" ondrop="folder_handle_drop(event);">
                 </div>
             </div>
         </div>
 
-        <div id="main-horizontal-divider" class="divider hidden"></div>
+        <div id="main-horizontal-divider" class="divider"></div>
 
         <div id="code-container">
             <div class="left-half">
@@ -147,13 +128,6 @@
                 <option value="sublime">Sublime Text</option>
                 <option value="vscode">VS Code</option>
             </select>
-
-            <label for="ui-mode">UI Mode:</label>
-            <select aria-label="UI Mode" name="ui-mode" id="ui-mode" onchange="change_ui_mode()">
-                <option value="simple">Simple</option>
-                <option value="ide">IDE</option>
-            </select>
-
             </div>
         </div>
 

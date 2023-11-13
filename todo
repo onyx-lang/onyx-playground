@@ -26,12 +26,14 @@
         - [x] Multiple projects are stored in LS
         - [x] Projects can be exported and imported
         - [x] Compiling is per project (all files are sent and a specific file is compiled)
-    - [ ] JS Virtual Filesystem
-        - [ ] Support Files in JS platform layer
-    - [ ] Fix up simple mode
-        - [ ] Many things were broken in this process...
+    - [x] JS Virtual Filesystem
+        - [x] Support Files in JS platform layer
+    - [x] Fix up simple mode
+        - [ ] ~~Many things were broken in this process...~~
+        - [x] Remove simple mode
+        - [ ] Add default project with examples
+    - [ ] Hide Canvas/Output
+        - [ ] Toggle hide/show buttons next to projects button
 
-
-- [ ] Hide Canvas/Output
-- [ ] Redesign "Examples" dropdown
+<!-- - [ ] Redesign "Examples" dropdown -->
 

@@ -16,6 +16,7 @@ function fs_handler(data) {
             let item = folders.lookup(data.path);
             if (!item && data.mode == 'write') {
                 item = folders.create_file(data.path, "");
+                folders.save();
                 folder_rebuild_view();
             }
 
@@ -39,6 +40,7 @@ function fs_handler(data) {
 
         case 'close': {
             if (Object.keys(open_fds).some(x => x == data.fd)) {
+                folders.save();
                 delete open_fds[data.fd];
                 RESPOND_WITH_RESULT(1);
             }
@@ -50,6 +52,7 @@ function fs_handler(data) {
         case 'rename': {
             // TODO: block renaming if a FD is open for the oldname
             let result = folders.move_file(data.oldname, data.newname);
+            folders.save();
             folder_rebuild_view();
             RESPOND_WITH_RESULT(result ? 1 : 0);
             break;
@@ -58,6 +61,7 @@ function fs_handler(data) {
         case 'remove': {
             // TODO: block removing if a FD is open for the name
             let result = folders.remove(data.name);
+            folders.save();
             folder_rebuild_view();
             RESPOND_WITH_RESULT(result ? 1 : 0);
             break;
@@ -139,7 +143,7 @@ function fs_handler(data) {
 
             fd.cursor += data.content.length;
 
-            folders.save();
+            editor.changeTabContents(fd.path, fd.item_ref.contents);
             RESPOND_WITH_RESULT(data.content.length);
             break;
         }

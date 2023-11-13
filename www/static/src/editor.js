@@ -184,6 +184,15 @@ class Editor {
         this.switchToTab(this.selectedTab);
     }
 
+    changeTabContents(path, contents) {
+        let match = this.tabs.findIndex(x => x.path == path);
+        if (match < 0) {
+            return;
+        }
+
+        this.tabs[match].session.setValue(contents);
+    }
+
     saveTab(filepath, save_func) {
         // TODO: Consider renaming tabs here...
         let match = this.tabs.findIndex(x => x.path == filepath);

@@ -1,6 +1,6 @@
 :root {
     --top-menu-bar-height: 40px;
-    --menu-bar-height: 32px;
+    --menu-bar-height: 40px;
     --input-bar-height: 48px;
     --divider-size: 4px;
     --left-half-width: 70%;
@@ -121,13 +121,13 @@ select:hover {
 
 #folder-view {
     width: calc(var(--folder-width) - var(--divider-size));
-    height: calc(100vh - 2 * var(--box-padding));
+    height: calc(100vh - var(--menu-bar-height) - 2 * var(--box-padding));
 
     float: left;
     padding: 4px;
 
-    display: grid;
-    grid-template-rows: calc(var(--menu-bar-height) + 2 * var(--box-padding)) 1fr;
+    /* display: grid;
+    grid-template-rows: calc(var(--menu-bar-height) + 2 * var(--box-padding)) 1fr; */
 }
 
 #folder-view .menu-bar {
@@ -174,7 +174,7 @@ select:hover {
     position: relative;
     min-height: var(--menu-bar-height);
     height: var(--menu-bar-height);
-    padding: 0 var(--box-padding);
+    padding: var(--box-padding);
     border-radius: var(--box-padding);
 }
 
@@ -506,7 +506,7 @@ select:hover {
     overflow-y: auto;
     overflow-x: hidden;
     height: 100%;
-    max-height: calc(100vh - var(--menu-bar-height) - 5 * var(--box-padding));  /* subtract the padding */
+    max-height: calc(100vh - var(--menu-bar-height) - 4 * var(--box-padding));  /* subtract the padding */
     background-color: var(--terminal-background-color);
     border-radius: var(--box-padding);
 }

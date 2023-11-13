@@ -89,7 +89,7 @@ async function submit_code(make_request) {
     if (wasm_worker != null) return;
 
     clear_output();
-    quick_save();
+    // quick_save();
 
     let response = await make_request();
 
@@ -208,24 +208,6 @@ function change_ui_theme(value) {
     persist_settings();
 }
 
-function change_ui_mode(value) {
-    let elem = document.getElementById('ui-mode');
-    if (value == null) {
-        value = elem.value;
-    } else {
-        document.querySelector(`#ui-mode option[value="${value}"]`).selected = true;
-    }
-
-    if (value == "ide") {
-        enable_ide_mode();
-    } else {
-        disable_ide_mode();
-    }
-
-    ui_mode = value;
-    persist_settings();
-}
-
 function persist_settings() {
     localStorage["editor_theme"] = editor.theme;
     localStorage["editor_keybind_mode"] = editor.keybinds;
@@ -243,7 +225,7 @@ function load_settings() {
     change_editor_theme(editor_theme);
     change_keybindings(editor_keybind_mode);
     change_ui_theme(ui_theme);
-    change_ui_mode(ui_mode);
+    enable_ide_mode();
 }
 
 async function handle_drop(e) {
@@ -357,13 +339,7 @@ window.onload = () => {
 
     editor = new Editor("code-editor");
 
-    // populate_examples();
     load_settings();
-    if (ui_mode == "simple") {
-        quick_load();
-    }
-
-    setInterval(quick_save, 2 * 60 * 1000); // Quick save every two minutes
 
     make_resizer("main-horizontal-divider", "--folder-width", "", (e) => {
         save_split_sizes();

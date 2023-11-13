@@ -277,12 +277,7 @@ class FolderSystem {
 }
 
 async function enable_ide_mode() {
-    $("#simple-menubar").addClass("hidden");
-    $("#folder-view").removeClass("hidden");
-    $("#main-horizontal-divider").removeClass("hidden");
-
     $(":root").css("--folder-width", localStorage.getItem("folder-width") ?? "25%");
-    $(":root").css("--top-menu-bar-height", "0px");
 
     folders = new FolderSystem();
     folders.openRecentProject();
@@ -298,6 +293,16 @@ async function enable_ide_mode() {
     setTimeout(() => {
         let ace_vim = require("ace/keyboard/vim");
         ace_vim.Vim.defineEx("write", 'w', folder_save_current_file)
+
+        ace.edit('code-editor').commands.addCommand({
+            name: 'Run code',
+            bindKey: {
+              win: 'Ctrl-R',
+              mac: 'Command-R'
+            },
+            exec: () => folder_run(),
+            readOnly: true // false if this command should not apply in readOnly mode
+        });
     }, 1000);
 }
 
@@ -317,6 +322,12 @@ function disable_ide_mode() {
 function ctrlSHandler(e) {
     if (e.ctrlKey && e.key == 's') {
         folder_save_current_file();
+        e.preventDefault();
+        return false;
+    }
+
+    if (e.ctrlKey && e.key == 'r') {
+        folder_run();
         e.preventDefault();
         return false;
     }
