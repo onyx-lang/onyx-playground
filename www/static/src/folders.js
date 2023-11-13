@@ -276,7 +276,7 @@ class FolderSystem {
     }
 }
 
-async function enable_ide_mode() {
+function enable_ide_mode() {
     $(":root").css("--folder-width", localStorage.getItem("folder-width") ?? "25%");
 
     folders = new FolderSystem();
@@ -284,7 +284,16 @@ async function enable_ide_mode() {
     folder_rebuild_view();
 
     document.addEventListener("keydown", ctrlSHandler);
-    
+
+    ace.edit('code-editor').commands.addCommand({
+        name: 'Run code',
+        bindKey: {
+            win: 'Ctrl-R',
+            mac: 'Command-R'
+        },
+        exec: () => folder_run(),
+        readOnly: true // false if this command should not apply in readOnly mode
+    });
  
     // Enable :w for vim mode
     // This is such a freaking hack. I don't know how to properly wait for the module
@@ -293,16 +302,6 @@ async function enable_ide_mode() {
     setTimeout(() => {
         let ace_vim = require("ace/keyboard/vim");
         ace_vim.Vim.defineEx("write", 'w', folder_save_current_file)
-
-        ace.edit('code-editor').commands.addCommand({
-            name: 'Run code',
-            bindKey: {
-              win: 'Ctrl-R',
-              mac: 'Command-R'
-            },
-            exec: () => folder_run(),
-            readOnly: true // false if this command should not apply in readOnly mode
-        });
     }, 1000);
 }
 
@@ -338,48 +337,6 @@ function _get_contents_for_file(path) {
     if (file) return file.contents;
 
     return "";
-}
-
-async function populate_examples_folder() {
-    let examples = await fetch(ROOT_ENDPOINT + "/list_examples").then(x => x.json())
-    let example_dir = folders.create_directory("Examples");
-    for (let ex of examples) {
-        let example_code = await fetch(`${ROOT_ENDPOINT}/example?example=${ex}`).then(x => x.text());
-        example_dir.elems.push({
-            name: ex,
-            type: "file",
-            contents: example_code
-        })
-    }
-}
-
-async function populate_simple_saved_folder() {
-    let folder_name = "Simple Mode Saves";
-
-    let saved_dir = folders.create_directory(folder_name);
-    for (let item in localStorage) {
-        if (/saved_/.test(item)) {
-            let item_name = item.substring(6);
-
-            let existing_item = folders.lookup(folder_name + "/" + item_name);
-            if (existing_item) {
-                existing_item.contents = localStorage[item];
-
-            } else {
-                saved_dir.elems.push({
-                    name: item_name,
-                    type: "file",
-                    contents: localStorage[item],
-                });
-            }
-        }
-    }
-}
-
-async function populate_core_libraries_folder() {
-    let core_libs = await fetch(ROOT_ENDPOINT + "/core_libraries.json").then(x => x.json())
-    let core_dir = folders.create_directory("Core Libraries");
-    core_dir.elems = core_libs;
 }
 
 function folder_rebuild_view() {
@@ -530,8 +487,6 @@ function folder_finalize_create(type) {
         folders.create_file(fullpath, "");
         folders.save();
         folder_rebuild_view();
-
-        folder_open_file(fullpath);
     }
 
     if (type == 'directory') {
@@ -603,44 +558,49 @@ function folder_open_project_modal() {
         }
     }
 
-    projects.sort();
-    projects.forEach(project => {
-        let $container = $(`<div class="list-container"></div>`);
+    if (projects.length == 0) {
+        $list.append(`<div style="font-size: 0.8rem; width: 100%; text-align: center;">No projects found</div>`);
 
-        let $button = $(`<button class='select'>${project}</button>`);
-        $button.on('click', ev => {
-            folders.switchProject(ev.target.textContent);
-            folder_rebuild_view();
-            $.modal.close();
+    } else {
+        projects.sort();
+        projects.forEach(project => {
+            let $container = $(`<div class="list-container"></div>`);
+
+            let $button = $(`<button class='select'>${project}</button>`);
+            $button.on('click', ev => {
+                folders.switchProject(ev.target.textContent);
+                folder_rebuild_view();
+                $.modal.close();
+            });
+
+            let $download_button = $(`<button class='download'><i class='fas fa-download'></i></button>`);
+            $download_button.on('click', ev => {
+                if (!ev.target.previousElementSibling) return;
+
+                let name = ev.target.previousElementSibling.textContent;
+                // Kind of a hack, but it works
+                let tmp_folders = new FolderSystem();
+                tmp_folders.switchProject(name);
+                _download_file(`${name}.json`, tmp_folders.createRestorePointString());
+            });
+
+            let $delete_button = $(`<button class='delete'><i class='fas fa-trash'></i></button>`);
+            $delete_button.on('click', ev => {
+                if (confirm("Are you sure you want to delete this project?")) {
+                    folders.deleteProject(
+                        ev.target.previousElementSibling.previousElementSibling.textContent
+                    );
+
+                    ev.target.parentNode.remove();
+                }
+            });
+
+            $container.append($button);
+            $container.append($download_button);
+            $container.append($delete_button);
+            $list.append($container);
         });
-
-        let $download_button = $(`<button class='download'><i class='fas fa-download'></i></button>`);
-        $download_button.on('click', ev => {
-            if (!ev.target.previousElementSibling) return;
-
-            let name = ev.target.previousElementSibling.textContent;
-            // Kind of a hack, but it works
-            let tmp_folders = new FolderSystem();
-            tmp_folders.switchProject(name);
-            _download_file(`${name}.json`, tmp_folders.createRestorePointString());
-        });
-
-        let $delete_button = $(`<button class='delete'><i class='fas fa-trash'></i></button>`);
-        $delete_button.on('click', ev => {
-            if (confirm("Are you sure you want to delete this project?")) {
-                folders.deleteProject(
-                    ev.target.previousElementSibling.previousElementSibling.textContent
-                );
-
-                ev.target.parentNode.remove();
-            }
-        });
-
-        $container.append($button);
-        $container.append($download_button);
-        $container.append($delete_button);
-        $list.append($container);
-    });
+    }
 
     $("#project-modal").modal();
 }
@@ -648,6 +608,7 @@ function folder_open_project_modal() {
 function folder_create_project() {
     let name = $("#project-name").val();
     if (name == "") return;
+    $("#project-name").empty();
 
     $.modal.close();
 

@@ -241,6 +241,7 @@ select:hover {
 
 .tab-bar .tab.selected {
     background-color: var(--light-background-color);
+    border-bottom: 1px solid #7fab44;
 }
 
 .tab-bar .tab[data-unsaved="true"] {

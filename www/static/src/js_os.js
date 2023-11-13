@@ -5,7 +5,9 @@ let next_dir_fd = 0;
 
 function fs_reset() {
     open_fds = {};
+    open_dirs = {};
     next_fd = 3;
+    next_dir_fd = 0;
 }
 
 function fs_handler(data) {

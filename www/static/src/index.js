@@ -332,11 +332,11 @@ function save_split_sizes() {
 }
 
 window.onload = () => {
-    // if ('serviceWorker' in navigator) {
-    //     navigator.serviceWorker.register(window.ROOT_ENDPOINT + "/static/src/service-worker.js", {
-    //         scope: window.ROOT_ENDPOINT
-    //     });
-    // }
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register(window.ROOT_ENDPOINT + "/static/src/service-worker.js", {
+            scope: window.ROOT_ENDPOINT
+        });
+    }
 
     editor = new Editor("code-editor");
 
@@ -347,7 +347,7 @@ window.onload = () => {
     });
 
     make_resizer("code-horizontal-divider", "--left-half-width", "", (e) => {
-        editor.resize(true);
+        editor.editor.resize(true);
         save_split_sizes();
     });
 

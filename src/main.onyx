@@ -164,8 +164,6 @@ compile_onyx_project :: (req: &Request, res: &Response) {
             working_dir = temp_directory
         );
 
-        logf(.Info, "{}", compile_result);
-
         switch compile_result {
             case .Ok {
                 res->file(wasm_file);
@@ -196,7 +194,7 @@ manifest_json :: (req: &Request, res: &Response) {
 
     res->json(Metadata.{
         short_name = "Onyx Playground",
-        name = "Onyx Playground - Try Onyx without Installing",
+        name = "Onyx Playground",
         icons = .[
             .{
                 src = tprintf("{}/static/logo_256.png", ENDPOINT),
@@ -223,31 +221,31 @@ manifest_json :: (req: &Request, res: &Response) {
     res->status(200);
 }
 
-@route.{.GET, "/core_libraries.json"}
-core_libraries_json :: (req: &Request, res: &Response) {
-    Elem :: struct { name, type, state, contents: str; elems: [] Elem }
+// @route.{.GET, "/core_libraries.json"}
+// core_libraries_json :: (req: &Request, res: &Response) {
+//     Elem :: struct { name, type, state, contents: str; elems: [] Elem }
 
-    build_dir :: (d: str) -> [] Elem {
-        out: [..] Elem;
+//     build_dir :: (d: str) -> [] Elem {
+//         out: [..] Elem;
 
-        for os.list_directory(d) {
-            full_path := os.path_join(d, it->name());
-            if os.is_file(full_path) {
-                out << .{ tprintf(it->name()), "file", contents = os.get_contents(full_path) };
-            }
-            if os.is_directory(full_path) {
-                out << .{ tprintf(it->name()), "dir", "closed", elems = build_dir(full_path) };
-            }
-        }
+//         for os.list_directory(d) {
+//             full_path := os.path_join(d, it->name());
+//             if os.is_file(full_path) {
+//                 out << .{ tprintf(it->name()), "file", contents = os.get_contents(full_path) };
+//             }
+//             if os.is_directory(full_path) {
+//                 out << .{ tprintf(it->name()), "dir", "closed", elems = build_dir(full_path) };
+//             }
+//         }
 
-        return out;
-    }
+//         return out;
+//     }
 
-    output := build_dir(tprintf("{}/core", ONYX_SOURCE_FOLDER));
-    res->json(output);
-    res->status(200);
-    res->end();
-}
+//     output := build_dir(tprintf("{}/core", ONYX_SOURCE_FOLDER));
+//     res->json(output);
+//     res->status(200);
+//     res->end();
+// }
 
 @route.{.GET, "/favicon.ico"}
 favicon :: (req: &Request, res: &Response) {
