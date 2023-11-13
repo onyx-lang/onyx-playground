@@ -243,6 +243,7 @@ function handle_dragover(e) {
 
 function show_input() {
     $("#input-bar").removeClass("hide");
+    document.getElementById("input-bar").focus({ preventScroll: true });
 }
 
 function submit_input() {
