@@ -1,0 +1,1 @@
+{"name":"Blank project","editor":[{"name":"program.onyx","path":"program.onyx","saved":true,"selected":true}],"compilationTarget":"program.onyx","files":[{"name":"program.onyx","type":"file","contents":"use core {*}\n\nmain :: () {\n    println(\"Hello, Onyx!\");\n}"}]}

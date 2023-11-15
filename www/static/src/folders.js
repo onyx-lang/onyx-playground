@@ -222,8 +222,6 @@ class FolderSystem {
     }
 
     save(project_name) {
-        localStorage["filesystem"] = JSON.stringify(this.folders);
-
         let project = this.createRestorePointString();
         if (project_name) {
             localStorage["project_" + project_name] = project;
@@ -235,11 +233,6 @@ class FolderSystem {
     }
 
     restore(project_name) {
-        if (!project_name && "filesystem" in localStorage) {
-            this.folders = JSON.parse(localStorage["filesystem"]);
-            return true;
-        }
-
         if (`project_${project_name}` in localStorage) {
             this.restoreFromString(localStorage[`project_${project_name}`]);
             return true;
@@ -263,8 +256,18 @@ class FolderSystem {
         localStorage["recent_project"] = project_name;
     }
 
-    openRecentProject() {
-        this.switchProject(localStorage["recent_project"] ?? "");
+    async openRecentProject() {
+        if ("recent_project" in localStorage) {
+            this.switchProject(localStorage["recent_project"]);
+            return;
+        }
+
+        // Load a default project.
+        let proj = await fetch(window.ROOT_ENDPOINT + "/static/blank_project.json").then(res => res.text());
+
+        this.restoreFromString(proj);
+        this.save("Blank project");
+        this.switchProject("Blank project");
     }
     
     deleteProject(project_name) {
@@ -276,11 +279,11 @@ class FolderSystem {
     }
 }
 
-function enable_ide_mode() {
+async function enable_ide_mode() {
     $(":root").css("--folder-width", localStorage.getItem("folder-width") ?? "25%");
 
     folders = new FolderSystem();
-    folders.openRecentProject();
+    await folders.openRecentProject();
     folder_rebuild_view();
 
     document.addEventListener("keydown", ctrlSHandler);
