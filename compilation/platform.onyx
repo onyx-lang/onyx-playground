@@ -133,6 +133,9 @@ DirectoryData :: u32
 }
 
 
+__chdir  :: (path: str) => false
+__getcwd :: () => ""
+
 
 // OS
 
