@@ -1,0 +1,18 @@
+package {
+    name "onyx-playground" 
+    author "Brendan Hansen" 
+    url "" 
+    description "A live environment to test and play with Onyx" 
+    version "0.0.1" 
+}
+
+config {
+    dependency_source_path "./lib" 
+    dependency_binary_path "./bin" 
+}
+
+dependencies {
+    http-server "0.2.24" git="git://onyxlang.io/repo/http-server" 
+    otmp "0.0.26" git="git://onyxlang.io/repo/otmp" 
+}
+
