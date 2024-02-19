@@ -83,8 +83,8 @@ compile_onyx :: (req: &Request, res: &Response) {
     body := req.body->json()?;
     code := body.root["code"]->as_str();
 
-    for wasm_file: temp_file(".wasm") {
-        for code_file: temp_file(".onyx") {
+    for wasm_file in temp_file(".wasm") {
+        for code_file in temp_file(".onyx") {
             for os.with_file(code_file, .Write) {
                 io.stream_write(it, code);
             }
@@ -106,7 +106,7 @@ compile_onyx :: (req: &Request, res: &Response) {
                     res->status(200);
                 }
 
-                case output: .Err {
+                case .Err as output {
                     res->body("text/plain", output);
                     res->status(500);
                 }
@@ -132,7 +132,7 @@ compile_onyx_project :: (req: &Request, res: &Response) {
 
             switch it.second->type() {
                 case .String {
-                    for file: os.with_file(path, .Write) {
+                    for file in os.with_file(path, .Write) {
                         io.stream_write(file, it.second->as_str());
                     }
                 }
@@ -147,7 +147,7 @@ compile_onyx_project :: (req: &Request, res: &Response) {
 
     build_project_dir(body.root["files"], temp_directory);
 
-    for wasm_file: temp_file(".wasm", temp_directory) {
+    for wasm_file in temp_file(".wasm", temp_directory) {
         source_files := iter.comp(
             body.root["config"]["source_files"]->as_array_iter(),
             [](it->as_str())
@@ -170,7 +170,7 @@ compile_onyx_project :: (req: &Request, res: &Response) {
                 res->status(200);
             }
 
-            case output: .Err {
+            case .Err as output {
                 res->body("text/plain", output);
                 res->status(500);
             }
