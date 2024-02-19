@@ -59,7 +59,7 @@ var cFunctions = exports.cFunctions = "\\b(?:hypot(?:f|l)?|s(?:scanf|ystem|nprin
 var onyxHighlightRules = function() {
 
     var keywordControls = (
-        "package|struct|enum|interface|where|use|global|if|elseif|else|for|while|do|switch|case|return|break|continue|defer|fallthrough|as|cast|sizeof|alignof|typeof|macro"
+        "package|struct|enum|interface|where|use|global|if|elseif|else|for|while|do|switch|case|return|break|continue|defer|fallthrough|as|cast|sizeof|alignof|typeof|macro|in|as"
     );
     
     var storageType = (
