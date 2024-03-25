@@ -12,7 +12,7 @@ config {
 }
 
 dependencies {
-    http-server "0.3.0" git="git://onyxlang.io/repo/http-server" 
-    otmp "0.0.34" git="git://onyxlang.io/repo/otmp" 
+    http-server "0.3.5" git="http://github.com/onyx-lang/pkg-http-server" 
+    otmp "0.0.36" git="http://github.com/onyx-lang/pkg-otmp" 
 }
 

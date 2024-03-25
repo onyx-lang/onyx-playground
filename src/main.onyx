@@ -78,43 +78,57 @@ run_compile_command :: (target: str, source_files: [] str, working_dir: str) -> 
     }
 }
 
+Result.or_break :: macro (r: Result($O, $E)) -> O {
+    switch v := r; v {
+        case .Ok as o do return o;
+        case .Err do break break;
+    }
+}
+
+Result.or_continue :: macro (r: Result($O, $E)) -> O {
+    switch v := r; v {
+        case .Ok as o do return o;
+        case .Err do continue;
+    }
+}
+
 @route.{.POST, "/compile"}
 compile_onyx :: (req: &Request, res: &Response) {
     body := req.body->json()?;
     code := body.root["code"]->as_str();
 
-    for wasm_file in temp_file(".wasm") {
-        for code_file in temp_file(".onyx") {
-            for os.with_file(code_file, .Write) {
-                io.stream_write(it, code);
-            }
-            
-            compile_result := run_compile_command(
-                target = string.advance(wasm_file, "compilation/".count),
-                source_files = .[
-                    string.advance(code_file, "compilation/".count),
-                    "./read_line.onyx",
-                    "./canvas.onyx",
-                    "./platform.onyx"
-                ],
-                working_dir = "compilation/"
-            );
+    use wasm_file := temp_file(".wasm");
+    use code_file := temp_file(".onyx");
 
-            switch compile_result {
-                case .Ok {
-                    res->file(wasm_file);
-                    res->status(200);
-                }
+    {
+        use code_file_handle := os.open(code_file.path, .Write)->or_break();
+        io.stream_write(&code_file_handle, code);
+    }
+    
+    compile_result := run_compile_command(
+        target = string.advance(wasm_file.path, "compilation/".count),
+        source_files = .[
+            string.advance(code_file.path, "compilation/".count),
+            "./read_line.onyx",
+            "./canvas.onyx",
+            "./platform.onyx"
+        ],
+        working_dir = "compilation/"
+    );
 
-                case .Err as output {
-                    res->body("text/plain", output);
-                    res->status(500);
-                }
-            }
+    switch compile_result {
+        case .Ok {
+            res->file(wasm_file.path);
+            res->status(200);
         }
 
-        res->end();
+        case .Err as output {
+            res->body("text/plain", output);
+            res->status(500);
+        }
     }
+
+    res->end();
 }
 
 @route.{.POST, "/compile_v2"}
@@ -132,9 +146,8 @@ compile_onyx_project :: (req: &Request, res: &Response) {
 
             switch it.second->type() {
                 case .String {
-                    for file in os.with_file(path, .Write) {
-                        io.stream_write(file, it.second->as_str());
-                    }
+                    use file := os.open(path, .Write)->or_break();
+                    io.stream_write(&file, it.second->as_str());
                 }
 
                 case .Object {
@@ -147,37 +160,37 @@ compile_onyx_project :: (req: &Request, res: &Response) {
 
     build_project_dir(body.root["files"], temp_directory);
 
-    for wasm_file in temp_file(".wasm", temp_directory) {
-        source_files := iter.comp(
-            body.root["config"]["source_files"]->as_array_iter(),
-            [](it->as_str())
-        );
+    use wasm_file := temp_file(".wasm", temp_directory);
 
-        source_files << "../read_line.onyx";
-        source_files << "../canvas.onyx";
-        source_files << "../platform.onyx";
+    source_files := iter.comp(
+        body.root["config"]["source_files"]->as_array_iter(),
+        [](it->as_str())
+    );
 
-        _, target := os.path_split(wasm_file);
-        compile_result := run_compile_command(
-            target = target,
-            source_files = source_files,
-            working_dir = temp_directory
-        );
+    source_files << "../read_line.onyx";
+    source_files << "../canvas.onyx";
+    source_files << "../platform.onyx";
 
-        switch compile_result {
-            case .Ok {
-                res->file(wasm_file);
-                res->status(200);
-            }
+    _, target := os.path_split(wasm_file.path);
+    compile_result := run_compile_command(
+        target = target,
+        source_files = source_files,
+        working_dir = temp_directory
+    );
 
-            case .Err as output {
-                res->body("text/plain", output);
-                res->status(500);
-            }
+    switch compile_result {
+        case .Ok {
+            res->file(wasm_file.path);
+            res->status(200);
         }
 
-        res->end();
+        case .Err as output {
+            res->body("text/plain", output);
+            res->status(500);
+        }
     }
+
+    res->end();
 }
 
 @route.{.GET, "/manifest.json"}
@@ -297,10 +310,20 @@ main :: () {
     tcp_server := http.server.tcp(pipeline);
     tcp_server->serve(4000);
 }
+
+
+
+
+TemporaryFilePath :: struct {
+    path: str;
+}
     
-temp_file :: (extension: str, prefix := "compilation") => iter.single(
-    tprintf("{}/{}{}", prefix, random.string(16, alpha_numeric=true), extension),
-    filename => {
-        os.remove_file(filename);
-    }
-);
+temp_file :: (extension: str, prefix := "compilation") -> TemporaryFilePath {
+    return .{ tprintf("{}/{}{}", prefix, random.string(16, alpha_numeric=true), extension) };
+}
+
+#overload
+delete :: (t: &TemporaryFilePath) {
+    os.remove_file(t.path);
+}
+
