@@ -12,15 +12,23 @@ config {
 }
 
 dependencies {
-    http-server "0.3.5" git="http://github.com/onyx-lang/pkg-http-server" 
+    http-server "0.3.6" git="http://github.com/onyx-lang/pkg-http-server" 
     otmp "0.0.36" git="http://github.com/onyx-lang/pkg-otmp" 
 }
 
 build {
     default {
-        runtime "onyx"
-        target "out.wasm"
-        source "src/main.onyx"
+        runtime "onyx" 
+        target "out.wasm" 
+        source "src/main.onyx" 
+        args "--stack-trace" 
     }
+}
+
+lsp {
+    mode "project" 
+    source_files "src/main" 
+    include_dirs "" 
+    working_dir "." 
 }
 

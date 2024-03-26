@@ -92,6 +92,15 @@ Result.or_continue :: macro (r: Result($O, $E)) -> O {
     }
 }
 
+#operator ?? macro (_r: Result($O, $E), code: Code) -> O {
+    switch __r := _r; __r {
+        case .Ok as o do return o;
+        case .Err as e {
+            #unquote code(e);
+        }
+    }
+}
+
 @route.{.POST, "/compile"}
 compile_onyx :: (req: &Request, res: &Response) {
     body := req.body->json()?;
@@ -101,7 +110,11 @@ compile_onyx :: (req: &Request, res: &Response) {
     use code_file := temp_file(".onyx");
 
     {
-        use code_file_handle := os.open(code_file.path, .Write)->or_break();
+        use code_file_handle := os.open(code_file.path, .Write) ?? [] {
+            res->status(500);
+            return return;
+        };
+
         io.stream_write(&code_file_handle, code);
     }
     
