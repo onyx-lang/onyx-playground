@@ -16,3 +16,11 @@ dependencies {
     otmp "0.0.36" git="http://github.com/onyx-lang/pkg-otmp" 
 }
 
+build {
+    default {
+        runtime "onyx"
+        target "out.wasm"
+        source "src/main.onyx"
+    }
+}
+

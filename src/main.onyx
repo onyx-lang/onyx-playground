@@ -26,7 +26,7 @@ list_examples :: (req: &Request, res: &Response) {
 
     example_folder := os.path_join(ONYX_SOURCE_FOLDER, "worksheets");
     names := iter.comp(os.list_directory(example_folder), [](string.temp_copy(it->name())));
-    slice.sort(names, string.compare);
+    names->sort(string.compare);
     for& names do it.count -= 5;
 
     res->json(names);
@@ -55,14 +55,14 @@ load_example :: (req: &Request, res: &Response) {
 #local
 run_compile_command :: (target: str, source_files: [] str, working_dir: str) -> Result(void, str) {
     args := make([..] str);
-    array.concat(&args, .[
+    args->concat(.[
         "-s", "KILL", "10s",
         "onyx", "build", "-r", "js",
         "--no-file-contents", "--no-colors", 
         "-o", target, "-DJS_PLATFORM_LAYER_EXTENSIONS",
     ]);
 
-    array.concat(&args, source_files);
+    args->concat(source_files);
 
     compile_process := os.process_spawn(
         "timeout", args,
@@ -307,8 +307,13 @@ main :: () {
     setup_templates();
 
     pipeline := setup_server();
-    tcp_server := http.server.tcp(pipeline);
-    tcp_server->serve(4000);
+    tcp_server := http.server.tcp(pipeline, .{
+        thread_count = 4,
+        max_clients = 256
+    });
+
+    server_port := conv.parse(u32, os.env("SERVER_PORT") ?? "4000") ?? 4000;
+    tcp_server->serve(server_port);
 }
 
 
