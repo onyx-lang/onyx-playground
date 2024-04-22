@@ -163,7 +163,7 @@ let import_obj = {
 
             new DataView(wasm_memory.buffer).setBigUint64(bytes_read_ptr, BigInt(bytes_read), true);
 
-            if (bytes_to_read == 0) {
+            if (bytes_read > 0) {
                 return 0;
             }
 

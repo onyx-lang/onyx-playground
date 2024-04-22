@@ -12,8 +12,8 @@ config {
 }
 
 dependencies {
-    http-server "0.3.6" git="http://github.com/onyx-lang/pkg-http-server" 
-    otmp "0.0.36" git="http://github.com/onyx-lang/pkg-otmp" 
+    http-server "0.3.7" git="http://github.com/onyx-lang/pkg-http-server" 
+    otmp "0.0.37" git="http://github.com/onyx-lang/pkg-otmp" 
 }
 
 build {
