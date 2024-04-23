@@ -87,7 +87,7 @@ function quick_load() {
         editor.setText(`use core {*}
 
 main :: () {
-    println("Hello, Onyx!");
+    println("Hello, Onyx!")
 }`);
         editor.clearSelection();
     }
