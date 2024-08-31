@@ -24,8 +24,8 @@ list_examples :: (c: Context) {
     use core.encoding.json
 
     example_folder := os.path_join(ONYX_SOURCE_FOLDER, "worksheets")
-    names := iter.comp(os.list_directory(example_folder), [](string.temp_copy(it->name())))
-    names->sort(string.compare)
+    names := Iterator.comp(os.list_directory(example_folder), [](str.temp_copy(it->name())))
+    names->sort(str.compare)
     for& names do it.count -= 5
 
     c->json(200, names)
@@ -107,9 +107,9 @@ compile_onyx :: (c: Context) {
     }
     
     compile_result := run_compile_command(
-        target = string.advance(wasm_file.path, "compilation/".count),
+        target = str.advance(wasm_file.path, "compilation/".count),
         source_files = .[
-            string.advance(code_file.path, "compilation/".count),
+            str.advance(code_file.path, "compilation/".count),
             "./read_line.onyx",
             "./canvas.onyx",
             "./platform.onyx"
@@ -159,9 +159,9 @@ compile_onyx_project :: (c: Context) {
 
     use wasm_file := temp_file(".wasm", temp_directory)
 
-    source_files := iter.comp(
+    source_files := Iterator.comp(
         body["config"]["source_files"]->as_array_iter(),
-        [](it->as_str())
+        [x](x->as_str())
     )
 
     source_files << "../read_line.onyx"
