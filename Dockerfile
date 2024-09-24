@@ -10,7 +10,7 @@ RUN onyx pkg sync
 COPY src src
 RUN onyx pkg build
 
-RUN rm -r src onyx-pkg.kdl
+# RUN rm -r src onyx-pkg.kdl
 
 COPY compilation compilation
 COPY www www

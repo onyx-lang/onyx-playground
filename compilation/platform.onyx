@@ -148,7 +148,3 @@ __sleep :: (ms: i32) {
 
 }
 
-__args :: (allocator: Allocator) -> [] cstr {
-    return .{}
-}
-

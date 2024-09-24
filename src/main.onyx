@@ -1,8 +1,7 @@
 #load "lib/packages"
 
 use core {*}
-use http
-use http.server {Request, Response, route}
+use nimbus {*}
 use otmp
 
 ENDPOINT :: ""
@@ -11,51 +10,45 @@ ONYX_SOURCE_FOLDER :: "/home/brendan/dev/onyx"
 template_registry: otmp.TemplateRegistry
 
 @route.{.GET, "/"}
-index :: (req: &Request, res: &Response) {
-    template_registry->render_template("index", &res.writer, &.{
+index :: (c: Context) {
+    c->set_header("Content-Type", "text/html")
+    c->write_headers(200)
+
+    template_registry->render_template("index", c->writer(), &.{
         endpoint = ENDPOINT,
     })
-
-    res->status(200)
-    res->end()
 }
 
 @route.{.GET, "/list_examples"}
-list_examples :: (req: &Request, res: &Response) {
+list_examples :: (c: Context) {
     use core.encoding.json
 
     example_folder := os.path_join(ONYX_SOURCE_FOLDER, "worksheets")
-    names := iter.comp(os.list_directory(example_folder), [](string.temp_copy(it->name())))
-    names->sort(string.compare)
+    names := Iterator.comp(os.list_directory(example_folder), [](str.temp_copy(it->name())))
+    names->sort(str.compare)
     for& names do it.count -= 5
 
-    res->json(names)
-    res->status(200)
-    res->end()
+    c->json(200, names)
 }
 
 @route.{.GET, "/example"}
-load_example :: (req: &Request, res: &Response) {
-    example_name := req->query_param(str, "example")
+load_example :: (c: Context) {
+    example_name := c->query("example")
     if !example_name do return
 
     example_file_path := tprintf("{}/worksheets/{}.onyx", ONYX_SOURCE_FOLDER, example_name)
 
     if os.is_file(example_file_path) {
         contents := os.get_contents(example_file_path)
-        res->body("text/plain", contents)
-        res->status(200)
+        c->blob(200, "text/plain", contents)
     } else {
-        res->status(404)
+        c->no_content(404)
     }
-
-    res->end()
 }
 
 #local
 run_compile_command :: (target: str, source_files: [] str, working_dir: str) -> Result(void, str) {
-    args := make([..] str)
-    args->concat(.[
+    args := Array.make(.[
         "-s", "KILL", "10s",
         "onyx", "build", "-r", "js",
         "--no-file-contents", "--no-colors", 
@@ -85,13 +78,6 @@ Result.or_break :: macro (r: Result($O, $E)) -> O {
     }
 }
 
-Result.or_continue :: macro (r: Result($O, $E)) -> O {
-    switch v := r; v {
-        case .Ok as o do return o
-        case .Err do continue
-    }
-}
-
 #operator ?? macro (_r: Result($O, $E), code: Code) -> O {
     switch __r := _r; __r {
         case .Ok as o do return o
@@ -102,26 +88,28 @@ Result.or_continue :: macro (r: Result($O, $E)) -> O {
 }
 
 @route.{.POST, "/compile"}
-compile_onyx :: (req: &Request, res: &Response) {
-    body := req.body->json()?
-    code := body.root["code"]->as_str()
+compile_onyx :: (c: Context) {
+    vars := c->bind(struct {
+        @"json:code"
+        code: str
+    })
 
     use wasm_file := temp_file(".wasm")
     use code_file := temp_file(".onyx")
 
     {
         use code_file_handle := os.open(code_file.path, .Write) ?? [] {
-            res->status(500)
+            c->no_content(500)
             return return
         }
 
-        io.stream_write(&code_file_handle, code)
+        io.stream_write(&code_file_handle, vars.code)
     }
     
     compile_result := run_compile_command(
-        target = string.advance(wasm_file.path, "compilation/".count),
+        target = str.advance(wasm_file.path, "compilation/".count),
         source_files = .[
-            string.advance(code_file.path, "compilation/".count),
+            str.advance(code_file.path, "compilation/".count),
             "./read_line.onyx",
             "./canvas.onyx",
             "./platform.onyx"
@@ -131,22 +119,18 @@ compile_onyx :: (req: &Request, res: &Response) {
 
     switch compile_result {
         case .Ok {
-            res->file(wasm_file.path)
-            res->status(200)
+            c->file(200, "application/wasm", wasm_file.path)
         }
 
         case .Err as output {
-            res->body("text/plain", output)
-            res->status(500)
+            c->blob(500, "text/plain", output)
         }
     }
-
-    res->end()
 }
 
 @route.{.POST, "/compile_v2"}
-compile_onyx_project :: (req: &Request, res: &Response) {
-    body := req.body->json()?
+compile_onyx_project :: (c: Context) {
+    body := c->json_raw()?
 
     temp_directory_name := random.string(32, alpha_numeric=true)
     temp_directory := os.path_join("compilation", temp_directory_name)
@@ -171,13 +155,13 @@ compile_onyx_project :: (req: &Request, res: &Response) {
         }
     }
 
-    build_project_dir(body.root["files"], temp_directory)
+    build_project_dir(body["files"], temp_directory)
 
     use wasm_file := temp_file(".wasm", temp_directory)
 
-    source_files := iter.comp(
-        body.root["config"]["source_files"]->as_array_iter(),
-        [](it->as_str())
+    source_files := Iterator.comp(
+        body["config"]["source_files"]->as_array_iter(),
+        [x](x->as_str())
     )
 
     source_files << "../read_line.onyx"
@@ -193,24 +177,19 @@ compile_onyx_project :: (req: &Request, res: &Response) {
 
     switch compile_result {
         case .Ok {
-            res->file(wasm_file.path)
-            res->status(200)
+            c->file(200, "application/wasm", wasm_file.path)
         }
 
         case .Err as output {
-            res->body("text/plain", output)
-            res->status(500)
+            c->blob(500, "text/plain", output)
         }
     }
-
-    res->end()
 }
 
 @route.{.GET, "/manifest.json"}
-manifest_json :: (req: &Request, res: &Response) {
+manifest_json :: (c: Context) {
     Metadata :: struct {
-        short_name, name, start_url, background_color, display, scope,
-        theme_color, description: str
+        short_name, name, start_url, background_color, display, scope, theme_color, description: str
 
         shortcuts, screenshots: [] str
         icons: [] struct {
@@ -218,7 +197,7 @@ manifest_json :: (req: &Request, res: &Response) {
         }
     }
 
-    res->json(Metadata.{
+    c->json(200, Metadata.{
         short_name = "Onyx Playground",
         name = "Onyx Playground",
         icons = .[
@@ -243,8 +222,6 @@ manifest_json :: (req: &Request, res: &Response) {
         description = "Onyx Playground",
         screenshots = str.[]
     })
-
-    res->status(200)
 }
 
 // @route.{.GET, "/core_libraries.json"}
@@ -274,40 +251,26 @@ manifest_json :: (req: &Request, res: &Response) {
 // }
 
 @route.{.GET, "/favicon.ico"}
-favicon :: (req: &Request, res: &Response) {
-    res->file("www/static/favicon.ico")
-    res->status(200)
-    res->end()
+favicon :: (c: Context) {
+    c->file(200, "image/x-icon", "www/static/favicon.ico")
 }
 
 
-setup_server :: () -> http.server.Pipeline {
-    http.server.set_mime_type("wasm", "application/wasm")
-    http.server.set_mime_type("ico", "image/x-icon")
+setup_server :: () -> &Nimbus {
+    n := Nimbus.new() |> new()
+    n->add(logger(style=.V2))
+    n->add(c => {
+        c->set_header("Cross-Origin-Embedder-Policy", "require-corp")
+        c->set_header("Cross-Origin-Opener-Policy", "same-origin")
+        c->set_header("Service-Worker-Allowed", "/")
 
-    router := http.server.router() |> alloc.on_heap()
-    router->collect_routes()
-
-    static := http.server.static(
-        aprintf("{}/static", ENDPOINT),
-        "www/static"
-    ) |> alloc.on_heap()
-
-    logger := http.server.logger(style=.V2) |> alloc.on_heap()
-
-    pipeline := http.server.pipeline()
-
-    pipeline->pipe((req, res) => {
-        res.headers->put("Cross-Origin-Embedder-Policy", "require-corp")
-        res.headers->put("Cross-Origin-Opener-Policy", "same-origin")
-        res.headers->put("Service-Worker-Allowed", "/")
+        c->next()
     })
+    n->add(static(aprintf("{}/static", ENDPOINT), "www/static"))
 
-    pipeline->pipe(static)
-    pipeline->pipe(router)
-    pipeline->pipe(logger)
+    n->add_tagged_routes()
 
-    return pipeline
+    return n
 }
 
 setup_templates :: () {
@@ -319,14 +282,13 @@ main :: () {
     random.set_seed(os.time())
     setup_templates()
 
-    pipeline := setup_server()
-    tcp_server := http.server.tcp(pipeline, .{
+    server_port := conv.parse(u32, os.env("SERVER_PORT") ?? "4000") ?? 4000
+
+    n := setup_server()
+    n->serve(server_port, .{
         thread_count = 4,
         max_clients = 256
     })
-
-    server_port := conv.parse(u32, os.env("SERVER_PORT") ?? "4000") ?? 4000
-    tcp_server->serve(server_port)
 }
 
 

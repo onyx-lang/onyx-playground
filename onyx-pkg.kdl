@@ -12,8 +12,8 @@ config {
 }
 
 dependencies {
-    http-server "0.3.10" git="http://github.com/onyx-lang/pkg-http-server" 
-    otmp "0.0.39" git="http://github.com/onyx-lang/pkg-otmp" 
+    otmp "0.0.44" git="http://github.com/onyx-lang/pkg-otmp" 
+    nimbus "0.0.16" git="http://github.com/brendanfh/nimbus" 
 }
 
 build {
