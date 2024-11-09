@@ -1,4 +1,4 @@
-#load "lib/packages"
+#load "../lib/packages"
 
 use core {*}
 use nimbus {*}
@@ -49,8 +49,7 @@ load_example :: (c: Context) {
 #local
 run_compile_command :: (target: str, source_files: [] str, working_dir: str) -> Result(void, str) {
     args := Array.make(.[
-        "-s", "KILL", "10s",
-        "onyx", "build", "-r", "js",
+        "build", "-r", "js", "--error-format", "v1",
         "--no-file-contents", "--no-colors", 
         "-o", target, "-DJS_PLATFORM_LAYER_EXTENSIONS",
     ])
@@ -58,7 +57,7 @@ run_compile_command :: (target: str, source_files: [] str, working_dir: str) -> 
     args->concat(source_files)
 
     compile_process := os.process_spawn(
-        "timeout", args,
+        "onyx", args,
         starting_directory=working_dir
     )
 

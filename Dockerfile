@@ -1,4 +1,4 @@
-FROM onyx:alpine
+FROM onyxlanguage/onyx:nightly-ovm-alpine AS build
 
 WORKDIR /app
 
@@ -8,10 +8,13 @@ RUN onyx pkg sync
 COPY src src
 RUN onyx pkg build
 
-# RUN rm -r src onyx-pkg.kdl
+FROM onyxlanguage/onyx:nightly-ovm-alpine
+
+WORKDIR /app
 
 COPY compilation compilation
 COPY www www
+COPY --from=build /app/out.wasm /app/out.wasm
 
 ENV SERVER_PORT=8080
 EXPOSE 8080
