@@ -1,5 +1,7 @@
 FROM onyxlanguage/onyx:nightly-ovm-alpine AS build
 
+RUN apk add git
+
 WORKDIR /app
 
 COPY onyx-pkg.kdl onyx-pkg.kdl
