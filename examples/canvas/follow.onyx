@@ -1,0 +1,41 @@
+// Move the mouse over the canvas. The blue circle eases toward the cursor.
+// Right-click this file, choose Set as compilation target, then press Run.
+
+use core {*}
+use canvas
+
+main :: () {
+    canvas.init();
+    w, h := canvas.get_size();
+
+    px := w / 2.0f;
+    py := h / 2.0f;
+
+    while true {
+        mx, my := canvas.mouse_position();
+        px += (mx - px) * 0.12f;
+        py += (my - py) * 0.12f;
+
+        canvas.fill_style("#18181b");
+        canvas.fill_rect(0.0f, 0.0f, w, h);
+
+        canvas.stroke_style("#3a3f4b");
+        canvas.line_width(2.0f);
+        canvas.begin_path();
+        canvas.move_to(mx, my);
+        canvas.line_to(px, py);
+        canvas.stroke();
+
+        canvas.fill_style("#7aa2f7");
+        canvas.begin_path();
+        canvas.arc(px, py, 16.0f, 0.0f, 6.283185f);
+        canvas.fill();
+
+        canvas.fill_style("#e5c07b");
+        canvas.begin_path();
+        canvas.arc(mx, my, 5.0f, 0.0f, 6.283185f);
+        canvas.fill();
+
+        canvas.sync();
+    }
+}

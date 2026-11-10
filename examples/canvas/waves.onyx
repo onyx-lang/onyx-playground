@@ -1,0 +1,38 @@
+// Moving sine waves. Right-click this file, choose Set as compilation target, then press Run.
+
+use core {*}
+use canvas
+
+main :: () {
+    canvas.init();
+    w, h := canvas.get_size();
+
+    colors := str.[ "#7aa2f7", "#56b6c2", "#c678dd" ];
+    phase := 0.0f;
+
+    while true {
+        canvas.fill_style("#18181b");
+        canvas.fill_rect(0.0f, 0.0f, w, h);
+        canvas.line_width(2.0f);
+
+        for c in 0 .. 3 {
+            canvas.stroke_style(colors[c]);
+            canvas.begin_path();
+
+            for i in 0 .. 64 {
+                x := cast(f32) i / 63.0f * w;
+                y := h * 0.5f + math.sin(x * 0.02f + phase + cast(f32) c * 0.7f) * (28.0f + cast(f32) c * 16.0f);
+                if i == 0 {
+                    canvas.move_to(x, y);
+                } else {
+                    canvas.line_to(x, y);
+                }
+            }
+
+            canvas.stroke();
+        }
+
+        phase += 0.08f;
+        canvas.sync();
+    }
+}

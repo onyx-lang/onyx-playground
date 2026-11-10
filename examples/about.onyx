@@ -1,0 +1,19 @@
+use core {*}
+
+main :: () {
+    println("Examples");
+    println("");
+    println("Press Run to execute the file marked with the target icon.");
+    println("Right-click a file and choose Set as compilation target to run a different one.");
+    println("Animations keep going until you press Stop.");
+    println("");
+    println("hello.onyx             prints a greeting");
+    println("guess.onyx             a number guessing game");
+    println("canvas/shapes.onyx     rectangles, arcs, curves, and text");
+    println("canvas/bounce.onyx     animated bouncing balls");
+    println("canvas/waves.onyx      moving sine waves");
+    println("canvas/particles.onyx  falling particles");
+    println("canvas/paint.onyx      draw with the mouse");
+    println("canvas/follow.onyx     a circle that follows the cursor");
+    println("canvas/clock.onyx      an analog clock");
+}

@@ -15,7 +15,7 @@ use core {os, io, Result}
 // Files
 FileData :: u32
 
-__file_open :: (path: str, mode: os.OpenMode) -> (FileData, os.FileError) {
+__file_open :: (path: str, mode: os.OpenMode, flags: os.OpenFlags) -> (FileData, os.FileError) {
     fd: FileData;
     success := __file_open_impl(path, mode, &fd);
     if !success {
@@ -107,6 +107,25 @@ __file_stream_vtable := io.Stream_Vtable.{
     }
 }
 
+__stdin: os.File;
+__stdout: os.File;
+__stderr: os.File;
+
+#init () {
+    __stdin = .{
+        .{ &__file_stream_vtable, .Block_On_Read },
+        0,
+    };
+    __stdout = .{
+        .{ &__file_stream_vtable },
+        1,
+    };
+    __stderr = .{
+        .{ &__file_stream_vtable },
+        2,
+    };
+}
+
 #foreign "host_fs" {
     __file_open_impl  :: (path: str, mode: os.OpenMode, out: &FileData) -> bool ---
     __file_close_impl :: (fd: FileData) -> bool ---
@@ -115,6 +134,12 @@ __file_stream_vtable := io.Stream_Vtable.{
     __file_remove :: (path: str) -> bool ---
     __file_exists :: (path: str) -> bool ---
     __file_stat   :: (path: str, stat: &os.FileStat) -> bool ---
+    __file_lstat  :: (path: str, stat: &os.FileStat) -> bool ---
+
+    __file_symlink  :: (target, link_path: str) -> bool ---
+    __file_link     :: (target, link_path: str) -> bool ---
+    __file_readlink :: (path: str, buf: [] u8) -> i32 ---
+    __file_truncate :: (handle: FileData, size: i64) -> bool ---
 
     __file_seek  :: (handle: FileData, to: i32, whence: io.SeekFrom) -> i32 ---
     __file_tell  :: (handle: FileData) -> u32 ---

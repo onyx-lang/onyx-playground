@@ -1,0 +1,7 @@
+// Right-click this file, choose Set as compilation target, then press Run.
+
+use core {*}
+
+main :: () {
+    println("Hello, Onyx!");
+}

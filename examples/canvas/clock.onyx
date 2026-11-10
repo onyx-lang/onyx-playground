@@ -1,0 +1,66 @@
+// An analog clock. The time is UTC.
+// Right-click this file, choose Set as compilation target, then press Run.
+
+use core {*}
+use canvas
+
+draw_hand :: (angle, length, width: f32, color: str) {
+    canvas.save();
+    canvas.rotate(angle);
+    canvas.stroke_style(color);
+    canvas.line_width(width);
+    canvas.line_join(canvas.LineJoin.Round);
+    canvas.begin_path();
+    canvas.move_to(-length * 0.12f, 0.0f);
+    canvas.line_to(length, 0.0f);
+    canvas.stroke();
+    canvas.restore();
+}
+
+main :: () {
+    canvas.init();
+    w, h := canvas.get_size();
+    radius := math.min(w, h) * 0.38f;
+
+    while true {
+        now := time.now();
+
+        canvas.fill_style("#18181b");
+        canvas.fill_rect(0.0f, 0.0f, w, h);
+
+        canvas.save();
+        canvas.translate(w / 2.0f, h / 2.0f);
+
+        canvas.stroke_style("#3f4451");
+        canvas.line_width(2.0f);
+        for i in 0 .. 12 {
+            canvas.save();
+            canvas.rotate(cast(f32) i / 12.0f * math.TAU);
+            canvas.begin_path();
+            canvas.move_to(radius - 14.0f, 0.0f);
+            canvas.line_to(radius, 0.0f);
+            canvas.stroke();
+            canvas.restore();
+        }
+
+        canvas.stroke_style("#9aa0a6");
+        canvas.line_width(6.0f);
+        canvas.begin_path();
+        canvas.arc(0.0f, 0.0f, radius, 0.0f, math.TAU);
+        canvas.stroke();
+
+        hour := cast(f32) (now.hour % 12) + cast(f32) now.min / 60.0f;
+        minute := cast(f32) now.min + cast(f32) now.sec / 60.0f;
+        draw_hand((hour / 12.0f) * math.TAU - math.PI / 2.0f, radius * 0.50f, 6.0f, "#e5c07b");
+        draw_hand((minute / 60.0f) * math.TAU - math.PI / 2.0f, radius * 0.72f, 4.0f, "#abb2bf");
+        draw_hand((cast(f32) now.sec / 60.0f) * math.TAU - math.PI / 2.0f, radius * 0.80f, 2.0f, "#e06c75");
+
+        canvas.fill_style("#7aa2f7");
+        canvas.begin_path();
+        canvas.arc(0.0f, 0.0f, 5.0f, 0.0f, math.TAU);
+        canvas.fill();
+
+        canvas.restore();
+        canvas.sync();
+    }
+}

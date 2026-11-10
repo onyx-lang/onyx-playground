@@ -75,17 +75,84 @@ function fs_handler(data) {
             break;
         }
 
-        case 'stat': {
-            let item = folders.lookup(data.name);
+        case 'stat':
+        case 'lstat': {
+            let item = folders.lookup(data.name, { follow: data.action != 'lstat' });
             if (!item) {
-                fs_response.setBigInt64(8, 0);
-                fs_response.setUint32(16, 0);
                 RESPOND_WITH_RESULT(0);
                 break;
             }
 
-            fs_response.setBigInt64(8, item.type == 'file' ? BigInt(item.contents.length) : 0, true);
-            fs_response.setUint32(16, item.type == 'file' ? 4 : 3, true);
+            let type = 0;
+            let size = 0;
+            if (item.type == 'file') {
+                type = 4;
+                size = item.contents.length;
+            } else if (item.type == 'dir') {
+                type = 3;
+            } else if (item.type == 'symlink') {
+                type = 5;
+                size = item.contents.length;
+            }
+
+            fs_response.setBigInt64(8, BigInt(size), true);
+            fs_response.setUint32(16, type, true);
+            fs_response.setBigUint64(24, 0n, true);
+            fs_response.setBigUint64(32, 0n, true);
+            fs_response.setBigUint64(40, 0n, true);
+            RESPOND_WITH_RESULT(1);
+            break;
+        }
+
+        case 'symlink': {
+            let ok = folders.create_symlink(data.link_path, data.target);
+            if (ok) {
+                folders.save();
+                folder_rebuild_view();
+            }
+            RESPOND_WITH_RESULT(ok ? 1 : 0);
+            break;
+        }
+
+        case 'link': {
+            let ok = folders.link(data.target, data.link_path);
+            if (ok) {
+                folders.save();
+                folder_rebuild_view();
+            }
+            RESPOND_WITH_RESULT(ok ? 1 : 0);
+            break;
+        }
+
+        case 'readlink': {
+            let item = folders.lookup(data.name, { follow: false });
+            if (!item || item.type != 'symlink') {
+                RESPOND_WITH_RESULT(-1);
+                break;
+            }
+
+            let encoded = new TextEncoder().encode(item.contents);
+            new Uint8Array(fs_shared_buffer).set(encoded, 8);
+            RESPOND_WITH_RESULT(encoded.length);
+            break;
+        }
+
+        case 'truncate': {
+            let fd = open_fds[data.fd];
+            if (!fd || fd.item_ref.type != 'file' || data.size < 0) {
+                RESPOND_WITH_RESULT(0);
+                break;
+            }
+
+            let contents = fd.item_ref.contents;
+            if (data.size < contents.length) {
+                fd.item_ref.contents = contents.slice(0, data.size);
+            } else if (data.size > contents.length) {
+                fd.item_ref.contents = contents + "\0".repeat(data.size - contents.length);
+            }
+
+            fd.cursor = Math.min(fd.cursor, fd.item_ref.contents.length);
+            editor.changeTabContents(fd.path, fd.item_ref.contents);
             RESPOND_WITH_RESULT(1);
             break;
         }
@@ -229,9 +296,12 @@ function fs_handler(data) {
             }
 
             let item = dir_fd.dir_ref.elems[dir_fd.item_cursor++];
-            
-            if (item.type == 'file') fs_response.setInt32(8, 4, true);
-            else                     fs_response.setInt32(8, 3, true);
+
+            let entry_type = 0;
+            if (item.type == 'file') entry_type = 4;
+            else if (item.type == 'dir') entry_type = 3;
+            else if (item.type == 'symlink') entry_type = 5;
+            fs_response.setInt32(8, entry_type, true);
 
             fs_response.setInt32(12, Math.min(255, item.name.length), true);
 

@@ -1,0 +1,56 @@
+// Falling particles. Right-click this file, choose Set as compilation target, then press Run.
+
+use core {*}
+use canvas
+
+Particle :: struct {
+    x, y, vx, vy, r: f32;
+    color: str;
+}
+
+main :: () {
+    canvas.init();
+    w, h := canvas.get_size();
+
+    colors := str.[ "#7aa2f7", "#e06c75", "#98c379", "#e5c07b", "#c678dd", "#56b6c2" ];
+
+    particles: [40] Particle;
+    for i in 0 .. 40 {
+        particles[i] = .{
+            random.float(0.0f, w),
+            random.float(0.0f, h),
+            random.float(-0.4f, 0.4f),
+            random.float(0.6f, 1.8f),
+            random.float(1.5f, 3.2f),
+            colors[random.between(0, 5)],
+        };
+    }
+
+    while true {
+        canvas.fill_style("#18181b");
+        canvas.fill_rect(0.0f, 0.0f, w, h);
+
+        for i in 0 .. 40 {
+            p := particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+
+            if p.y > h + 8.0f {
+                p.x = random.float(0.0f, w);
+                p.y = -p.r;
+                p.vx = random.float(-0.4f, 0.4f);
+                p.vy = random.float(0.6f, 1.8f);
+                p.color = colors[random.between(0, 5)];
+            }
+
+            canvas.fill_style(p.color);
+            canvas.begin_path();
+            canvas.arc(p.x, p.y, p.r, 0.0f, 6.283185f);
+            canvas.fill();
+
+            particles[i] = p;
+        }
+
+        canvas.sync();
+    }
+}

@@ -1,6 +1,6 @@
-const app_version = 4;
+const app_version = 7;
 
-const cacheName = 'cache-v2';
+const cacheName = 'cache-v5';
 const precacheResources = [
   '/playground',
   '/playground/static/css/index.css',
@@ -12,6 +12,7 @@ const precacheResources = [
   '/playground/static/src/js_os.js',
   '/playground/static/src/canvas.js',
   '/playground/static/src/folders.js',
+  '/playground/static/examples_project.json',
   '/playground/static/src/index.js',
   '/playground/static/vendor/ace/ace.js',
   '/playground/static/vendor/jquery/jquery.min.js',
@@ -20,6 +21,7 @@ const precacheResources = [
 
 
 self.addEventListener('install', event => {
+    self.skipWaiting();
     event.waitUntil(
         caches.open(cacheName)
             .then(cache => {
@@ -28,6 +30,14 @@ self.addEventListener('install', event => {
             .then(_ => {
                 console.log("Service worker installed.");
             })
+    );
+});
+
+self.addEventListener('activate', event => {
+    event.waitUntil(
+        caches.keys()
+            .then(keys => Promise.all(keys.filter(key => key !== cacheName).map(key => caches.delete(key))))
+            .then(() => self.clients.claim())
     );
 });
 

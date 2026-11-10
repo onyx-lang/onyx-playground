@@ -1,0 +1,29 @@
+// Click and drag on the canvas to draw.
+// Right-click this file, choose Set as compilation target, then press Run.
+
+use core {*}
+use canvas
+
+main :: () {
+    canvas.init();
+    w, h := canvas.get_size();
+
+    canvas.fill_style("#18181b");
+    canvas.fill_rect(0.0f, 0.0f, w, h);
+
+    canvas.fill_style("#9aa0a6");
+    canvas.font("16px sans-serif");
+    canvas.fill_text("Click and drag", 24.0f, 36.0f);
+
+    canvas.fill_style("#7aa2f7");
+    while true {
+        if canvas.mouse_down() {
+            x, y := canvas.mouse_position();
+            canvas.begin_path();
+            canvas.arc(x, y, 6.0f, 0.0f, 6.283185f);
+            canvas.fill();
+        }
+
+        canvas.sync();
+    }
+}

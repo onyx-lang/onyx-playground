@@ -3,7 +3,7 @@
     <head>
         <title>Onyx Playground</title> 
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta name="theme-color" content="#111111"/>
+        <meta name="theme-color" content="#18181b"/>
 
         <link rel="manifest" href="{% $endpoint %}/manifest.json">
 
@@ -24,22 +24,20 @@
         <script src="{% $endpoint %}/static/src/index.js"></script>
     </head>
 
-    <body id="body">
+    <body id="body" class="ui-dark-theme">
         <div id="simple-menubar" class="menu-bar">
-            <div class="floating-container">
-                <div style="display: flex; justify-content: space-between;">
-                    <div>
-                        <button title="New Project" style="background-color: #3467cd" onclick="folder_open_project_modal()"><i class="fas fa-project-diagram"></i></button>
-                    </div>
-                    <div>
-                        <button title="Run"  style="background-color: #abcd34" class="run-button" onclick="folder_run()"><i class="fas fa-play"></i></button>
-                        <button title="Stop" style="background-color: #cd3434" onclick="kill_code()"><i class="fas fa-stop"></i></button>
-                    </div>
-                    <div>
-                        <a title="Settings" href="#settings-modal" rel="modal:open"><i class="fas fa fa-gears"></i></a>
-                        <a title="Package Reference" href="https://docs.onyxlang.io/packages/core" target="_blank"><i class="fas fa fa-cube"></i></a>
-                        <a title="Book" href="https://docs.onyxlang.io/book" target="_blank"><i class="fas fa fa-book"></i></a>
-                    </div>
+            <div class="toolbar">
+                <div class="toolbar-group">
+                    <button title="New Project" class="icon-button" onclick="folder_open_project_modal()"><i class="fas fa-project-diagram"></i></button>
+                </div>
+                <div class="toolbar-group">
+                    <button title="Run" class="icon-button icon-accent run-button" onclick="folder_run()"><i class="fas fa-play"></i></button>
+                    <button title="Stop" class="icon-button icon-danger" onclick="kill_code()"><i class="fas fa-stop"></i></button>
+                </div>
+                <div class="toolbar-group">
+                    <a title="Settings" class="icon-button" href="#settings-modal" rel="modal:open"><i class="fas fa fa-gears"></i></a>
+                    <a title="Package Reference" class="icon-button" href="https://docs.onyxlang.io/packages/core" target="_blank"><i class="fas fa fa-cube"></i></a>
+                    <a title="Book" class="icon-button" href="https://docs.onyxlang.io/book" target="_blank"><i class="fas fa fa-book"></i></a>
                 </div>
             </div>
         </div>
@@ -111,9 +109,9 @@
                 <option value="eclipse">Eclipse</option>
                 <option value="github">Github</option>
                 <option value="gruvbox">Gruvbox</option>
-                <option selected value="monokai">Monokai</option>
+                <option value="monokai">Monokai</option>
                 <option value="nord-dark">Nord Dark</option>
-                <option value="one-dark">One Dark</option>
+                <option selected value="one-dark">One Dark</option>
                 <option value="terminal">Terminal</option>
                 <option value="tomorrow">Tomorrow</option>
                 <option value="tomorrow-night-bright">Tomorrow Night Bright</option>
@@ -132,70 +130,76 @@
 
         <div id="save-modal" class="modal">
             <h2>Save Online</h2>
-            <div>
-                <span style="margin: 8px 0;" id="permalink">Permalink not created.</span>
-                <button style="float: right; padding: 0 8px;" onclick="request_permalink()">Create permalink</button>
+            <div class="permalink-row">
+                <span id="permalink">Permalink not created.</span>
+                <button class="primary" onclick="request_permalink()">Create permalink</button>
             </div>
 
-            <br/>
             <h2>Save Locally</h2>
-            <input type="text" id="save-filename" name="save-filename" placeholder="Name" />
-            <br/>
-            <button onclick="save_to_local_storage()">Save</button>
+            <div class="modal-field">
+                <input type="text" id="save-filename" name="save-filename" placeholder="Name" />
+                <button class="primary" onclick="save_to_local_storage()">Save</button>
+            </div>
 
-            <div class="file-list"> </div>
+            <div class="file-list"></div>
         </div>
 
         <div id="load-modal" class="modal">
             <h2>Load</h2>
-            <input type="text" id="load-filename" name="load-filename" placeholder="Name" />
-            <br/>
-            <button onclick="load_from_local_storage()">Load</button>
+            <div class="modal-field">
+                <input type="text" id="load-filename" name="load-filename" placeholder="Name" />
+                <button class="primary" onclick="load_from_local_storage()">Load</button>
+            </div>
 
-            <div class="file-list"> </div>
+            <div class="file-list"></div>
         </div>
 
         <div id="create-file-modal" class="modal">
             <h2>Create File</h2>
-            <div>Base: <span class="create-base-path"></span></div>
-            <input type="text" name="create-name" placeholder="Name" value="" />
-            <br/>
-            <button onclick="folder_finalize_create('file')">Create</button>
+            <div class="modal-note">Base <span class="create-base-path"></span></div>
+            <div class="modal-field">
+                <input type="text" name="create-name" placeholder="Name" value="" />
+                <button class="primary" onclick="folder_finalize_create('file')">Create</button>
+            </div>
         </div>
 
         <div id="create-dir-modal" class="modal">
             <h2>Create Directory</h2>
-            <div>Base: <span class="create-base-path"></span></div>
-            <input type="text" name="create-name" placeholder="Name" value="" />
-            <br/>
-            <button onclick="folder_finalize_create('directory')">Create</button>
+            <div class="modal-note">Base <span class="create-base-path"></span></div>
+            <div class="modal-field">
+                <input type="text" name="create-name" placeholder="Name" value="" />
+                <button class="primary" onclick="folder_finalize_create('directory')">Create</button>
+            </div>
         </div>
 
         <div id="rename-modal" class="modal">
             <h2>Rename</h2>
-            <input type="text" id="rename-name" name="rename-name" placeholder="Name" value="" />
-            <br/>
-            <button onclick="folder_finalize_rename()">Rename</button>
+            <div class="modal-field">
+                <input type="text" id="rename-name" name="rename-name" placeholder="Name" value="" />
+                <button class="primary" onclick="folder_finalize_rename()">Rename</button>
+            </div>
         </div>
 
         <div id="remove-modal" class="modal">
             <h2>Remove</h2>
-            <p></p>
-            <br/>
-            <button onclick="folder_finalize_remove()">Remove</button>
+            <p class="confirm"></p>
+            <div class="modal-actions">
+                <button class="danger" onclick="folder_finalize_remove()">Remove</button>
+            </div>
         </div>
 
         <div id="project-modal" class="modal">
             <h2>Projects</h2>
             <p>Create new project</p>
-            <input type="text" id="project-name" name="project-name" placeholder="Name" />
-            <br/>
-            <button onclick="folder_create_project()">Create</button>
+            <div class="modal-field">
+                <input type="text" id="project-name" name="project-name" placeholder="Name" />
+                <button class="primary" onclick="folder_create_project()">Create</button>
+            </div>
 
             <p>Load existing project</p>
-            <div class="project-list"> </div>
+            <div class="project-list"></div>
 
-            <p>Upload existing roject</p>
+            <p>Upload existing project</p>
             <button onclick="folder_project_start_upload()">Upload</button>
         </div>
 

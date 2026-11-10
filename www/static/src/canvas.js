@@ -123,6 +123,7 @@ function canvas_process(instr) {
         case 'move_to': ctx.moveTo(instr[2], instr[3]); break;
         case 'quadratic_curve_to': ctx.quadraticCurveTo(instr[2], instr[3], instr[4], instr[5]); break;
         case 'rect': ctx.rect(instr[2], instr[3], instr[4], instr[5]); break;
+        case 'restore': ctx.restore(); break;
         case 'rotate': ctx.rotate(instr[2]); break;
         case 'save': ctx.save(); break;
         case 'scale': ctx.scale(instr[2], instr[3]); break;

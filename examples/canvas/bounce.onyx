@@ -1,0 +1,57 @@
+// Press Run. This file is the compilation target.
+// Right-click any other example and choose Set as compilation target to run that one.
+// Press Stop to end the animation.
+
+use core {*}
+use canvas
+
+Ball :: struct {
+    x, y, vx, vy, r: f32;
+    color: str;
+}
+
+main :: () {
+    canvas.init();
+    w, h := canvas.get_size();
+
+    colors := str.[ "#7aa2f7", "#e06c75", "#98c379", "#e5c07b", "#c678dd", "#56b6c2" ];
+
+    balls: [6] Ball;
+    for i in 0 .. 6 {
+        speed := random.float(1.6f, 3.4f);
+        vx := speed;
+        if i % 2 == 0 do vx = -speed;
+
+        balls[i] = .{
+            random.float(60.0f, w - 60.0f),
+            random.float(60.0f, h - 60.0f),
+            vx,
+            random.float(-3.0f, 3.0f),
+            random.float(14.0f, 26.0f),
+            colors[i],
+        };
+    }
+
+    while true {
+        canvas.fill_style("#18181b");
+        canvas.fill_rect(0.0f, 0.0f, w, h);
+
+        for i in 0 .. 6 {
+            b := balls[i];
+            b.x += b.vx;
+            b.y += b.vy;
+
+            if b.x < b.r || b.x > w - b.r do b.vx = -b.vx;
+            if b.y < b.r || b.y > h - b.r do b.vy = -b.vy;
+
+            canvas.fill_style(b.color);
+            canvas.begin_path();
+            canvas.arc(b.x, b.y, b.r, 0.0f, math.TAU);
+            canvas.fill();
+
+            balls[i] = b;
+        }
+
+        canvas.sync();
+    }
+}

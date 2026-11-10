@@ -8,6 +8,48 @@ function S(strptr, strlen) {
     return new TextDecoder().decode(strdata);
 }
 
+let stdin_pending = new Uint8Array(0);
+let stdin_cursor = 0;
+
+function read_stdin(output_ptr, output_len) {
+    if (output_len <= 0) return 0;
+
+    if (stdin_cursor >= stdin_pending.length) {
+        self.postMessage({ type: 'show_input', data: null });
+
+        let input_flag = new Int32Array(input_shared_buffer);
+        Atomics.store(input_flag, 0, 0);
+        Atomics.wait(input_flag, 0, 0);
+
+        let bytes = new Uint8Array(input_shared_buffer);
+        let end = 4;
+        while (end < bytes.length && bytes[end] != 0) end++;
+        stdin_pending = bytes.slice(4, end);
+        stdin_cursor = 0;
+    }
+
+    let n = Math.min(output_len, stdin_pending.length - stdin_cursor);
+    new Uint8Array(wasm_memory.buffer, output_ptr, n).set(
+        stdin_pending.subarray(stdin_cursor, stdin_cursor + n)
+    );
+    stdin_cursor += n;
+    return n;
+}
+
+function write_file_stat(action, name, outptr) {
+    let result = FS_ACTION(action, { name });
+    if (result <= 0) return 0;
+
+    let data = new DataView(wasm_memory.buffer);
+    let fs_response = new DataView(fs_shared_buffer);
+    data.setBigInt64(outptr, fs_response.getBigInt64(8, true), true);
+    data.setUint32(outptr + 8, fs_response.getUint32(16, true), true);
+    data.setBigUint64(outptr + 16, fs_response.getBigUint64(24, true), true);
+    data.setBigUint64(outptr + 24, fs_response.getBigUint64(32, true), true);
+    data.setBigUint64(outptr + 32, fs_response.getBigUint64(40, true), true);
+    return 1;
+}
+
 function FS_ACTION(action, data) {
     self.postMessage({
         type: 'fs',
@@ -90,6 +132,7 @@ let import_obj = {
         },
 
         __file_close_impl(fd) {
+            if (fd < 3) return 1;
             return FS_ACTION('close', { fd: String(fd) }) == 1;
         },
 
@@ -113,22 +156,45 @@ let import_obj = {
         },
 
         __file_stat(name_ptr, name_len, outptr) {
-            let name = S(name_ptr, name_len);
+            return write_file_stat('stat', S(name_ptr, name_len), outptr);
+        },
 
-            let result = FS_ACTION('stat', { name });
-            if (result > 0) {
-                let data = new DataView(wasm_memory.buffer);
-                let fs_response = new DataView(fs_shared_buffer);
+        __file_lstat(name_ptr, name_len, outptr) {
+            return write_file_stat('lstat', S(name_ptr, name_len), outptr);
+        },
 
-                data.setBigInt64(outptr, fs_response.getBigInt64(8, true), true);
-                data.setUint32(outptr + 8, fs_response.getUint32(16, true), true);
-                return 1;
-            }
+        __file_symlink(target_ptr, target_len, link_ptr, link_len) {
+            return FS_ACTION('symlink', {
+                target: S(target_ptr, target_len),
+                link_path: S(link_ptr, link_len),
+            }) == 1;
+        },
 
-            return 0;
+        __file_link(target_ptr, target_len, link_ptr, link_len) {
+            return FS_ACTION('link', {
+                target: S(target_ptr, target_len),
+                link_path: S(link_ptr, link_len),
+            }) == 1;
+        },
+
+        __file_readlink(path_ptr, path_len, buf_ptr, buf_len) {
+            let result = FS_ACTION('readlink', { name: S(path_ptr, path_len) });
+            if (result < 0 || result > buf_len) return -1;
+
+            new Uint8Array(wasm_memory.buffer).set(
+                new Uint8Array(fs_shared_buffer).slice(8, 8 + result),
+                buf_ptr
+            );
+            return result;
+        },
+
+        __file_truncate(fd, size) {
+            if (fd < 3) return 0;
+            return FS_ACTION('truncate', { fd, size: Number(size) }) == 1;
         },
 
         __file_seek(fd, to, whence) {
+            if (fd < 3) return -1;
             const whence_map = [
                 'start',
                 'current',
@@ -139,14 +205,21 @@ let import_obj = {
         },
 
         __file_tell(fd) {
+            if (fd < 3) return 0;
             return FS_ACTION('tell', { fd });
         },
 
         __file_size(fd) {
+            if (fd < 3) return 0;
             return FS_ACTION('size', { fd });
         },
 
         __file_read(fd, output_ptr, output_len, bytes_read_ptr) {
+            if (fd == 0) {
+                let n = read_stdin(output_ptr, output_len);
+                new DataView(wasm_memory.buffer).setBigUint64(bytes_read_ptr, BigInt(n), true);
+                return n > 0 ? 0 : 2;
+            }
             let fs_data = new Uint8Array(fs_shared_buffer);
             let wasm_data = new Uint8Array(wasm_memory.buffer);
 
@@ -171,6 +244,12 @@ let import_obj = {
         },
 
         __file_write(fd, input_ptr, input_len, bytes_wrote_ptr) {
+            if (fd == 1 || fd == 2) {
+                self.postMessage({ type: 'print_str', data: S(input_ptr, input_len) });
+                new DataView(wasm_memory.buffer).setBigUint64(bytes_wrote_ptr, BigInt(input_len), true);
+                return 0;
+            }
+
             let input = S(input_ptr, input_len);
 
             let result = FS_ACTION('write', { fd, content: input });

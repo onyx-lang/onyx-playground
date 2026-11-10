@@ -78,6 +78,32 @@ class FolderSystem {
         return dir.elems[dir.elems.length - 1];
     }
 
+    create_symlink(path, target) {
+        if (this.lookup(path, { follow: false })) return false;
+
+        let dir = this.create_directory(this.get_containing_directory(path));
+        let filename = path.substring(path.lastIndexOf("/") + 1);
+        if (!filename) return false;
+
+        dir.elems.push({
+            name: filename,
+            type: "symlink",
+            contents: target,
+        });
+        return true;
+    }
+
+    link(target, link_path) {
+        let src = this.lookup(target, { follow: false });
+        if (!src || src.type == "dir") return false;
+        if (this.lookup(link_path, { follow: false })) return false;
+
+        if (src.type == "symlink") return this.create_symlink(link_path, src.contents);
+
+        this.create_file(link_path, src.contents ?? "");
+        return true;
+    }
+
     remove(path) {
         let containing_dir = this.get_containing_directory(path);
         let dir = this.create_directory(containing_dir);
@@ -92,28 +118,33 @@ class FolderSystem {
         }
     }
 
-    // Returns null if the item at the path does not exist
-    lookup(path) {
+    // Returns null if the item at the path does not exist.
+    // Symlinks are followed unless `options.follow` is false. A symlink in the
+    // middle of a path is always followed.
+    lookup(path, options = {}, depth = 0) {
+        if (depth > 8) return null;
+
+        const follow = options.follow !== false;
         let parts = this._getPathParts(path);
-        
         let root = { type:"dir", elems:this.folders };
-        let i;
-        for (i=0; i<parts.length; i++) {
-            if (root.type == "dir") {
-                let elems = root.elems.filter(x => x.name == parts[i]);
-                if (elems.length != 1) {
-                    root = null;
-                    break;
+
+        for (let i = 0; i < parts.length; i++) {
+            if (!root || root.type != "dir" || !root.elems) return null;
+
+            let match = root.elems.find(x => x.name == parts[i]);
+            if (!match) return null;
+
+            const is_last = i == parts.length - 1;
+            if (match.type == "symlink" && (!is_last || follow)) {
+                let target = match.contents;
+                if (target[0] != "/") {
+                    let parent = parts.slice(0, i).join("/");
+                    target = parent ? `${parent}/${target}` : target;
                 }
-
-                root = elems[0];
-
-            } else if (root.type == "file") {
-                if (root.name != parts[i] || i != parts.length - 1) {
-                    root = null;
-                }
-
-                break;
+                root = this.lookup(target, { follow: true }, depth + 1);
+                if (!root) return null;
+            } else {
+                root = match;
             }
         }
 
@@ -130,6 +161,8 @@ class FolderSystem {
 
         if (existing.type == "file") {
             this.create_file(new_path, existing.contents);
+        } else if (existing.type == "symlink") {
+            this.create_symlink(new_path, existing.contents);
         } else {
             let newdir = this.create_directory(new_path);
             newdir.elems = existing.elems;
@@ -176,9 +209,11 @@ class FolderSystem {
                     break;
                 }
 
-                case "file": {
+                case "file":
+                case "symlink": {
+                    let icon = t.type == "symlink" ? "fa-link" : "fa-file";
                     output += `<div class="folder-item file" data-filename="${name}" draggable="true">
-                    <i class="fa fa-file"></i>
+                    <i class="fa ${icon}"></i>
                     ${t.name}
                     ${name == this.compilationTarget ? "<i class='fa fa-bullseye'></i>" : ""}
                     </div>`;
@@ -256,15 +291,29 @@ class FolderSystem {
         localStorage["recent_project"] = project_name;
     }
 
+    async installBundledProject(name, path) {
+        let key = "project_" + name;
+        if (key in localStorage) return;
+
+        let res = await fetch(window.ROOT_ENDPOINT + path);
+        if (!res.ok) return;
+        localStorage[key] = await res.text();
+    }
+
     async openRecentProject() {
+        await this.installBundledProject("Examples", "/static/examples_project.json");
+
         if ("recent_project" in localStorage) {
             this.switchProject(localStorage["recent_project"]);
             return;
         }
 
-        // Load a default project.
-        let proj = await fetch(window.ROOT_ENDPOINT + "/static/blank_project.json").then(res => res.text());
+        if ("project_Examples" in localStorage) {
+            this.switchProject("Examples");
+            return;
+        }
 
+        let proj = await fetch(window.ROOT_ENDPOINT + "/static/blank_project.json").then(res => res.text());
         this.restoreFromString(proj);
         this.save("Blank project");
         this.switchProject("Blank project");
@@ -459,6 +508,7 @@ function folder_item_click(e) {
 
 function folder_open_file(filename) {
     let file = folders.lookup(filename);
+    if (!file || file.type != "file") return;
     editor.openOrSwitchToTab(filename, file.name, () => file.contents);
 }
 
@@ -562,7 +612,7 @@ function folder_open_project_modal() {
     }
 
     if (projects.length == 0) {
-        $list.append(`<div style="font-size: 0.8rem; width: 100%; text-align: center;">No projects found</div>`);
+        $list.append(`<div class="empty-note">No projects found</div>`);
 
     } else {
         projects.sort();

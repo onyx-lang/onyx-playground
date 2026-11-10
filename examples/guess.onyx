@@ -1,0 +1,32 @@
+// Right-click this file, choose Set as compilation target, then press Run.
+// Type a guess in the input bar and press Enter.
+
+use core {*}
+
+main :: () {
+    clock := time.now();
+    random.set_seed(cast(u32) (clock.hour * 3600 + clock.min * 60 + clock.sec));
+
+    secret := random.between(1, 100);
+    println("I'm thinking of a number from 1 to 100.");
+
+    while true {
+        print("Your guess: ");
+        line := read_line();
+
+        if line.count == 0 || line[0] < '0' || line[0] > '9' {
+            println("Enter a number.");
+            continue;
+        }
+
+        guess := conv.parse(i32, line) ?? 0;
+        if guess < secret {
+            println("Too low.");
+        } elseif guess > secret {
+            println("Too high.");
+        } else {
+            println("That's it.");
+            break;
+        }
+    }
+}

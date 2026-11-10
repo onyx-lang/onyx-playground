@@ -3,7 +3,7 @@ class Editor {
         this.target_id = target_id;
         this.editor = ace.edit(target_id);
 
-        this.setTheme("chrome");
+        this.setTheme("one-dark");
         this.setKeybindings("normal");
 
         this.editor.setShowPrintMargin(false);

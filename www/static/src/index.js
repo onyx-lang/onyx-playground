@@ -3,6 +3,12 @@ let editor = null;
 let ui_theme = "dark";
 let ui_mode = "simple";
 
+const UI_THEME_EDITOR = {
+    dark: "one-dark",
+    blue: "nord-dark",
+    light: "tomorrow",
+};
+
 let input_shared_buffer  = new SharedArrayBuffer(1024 * Uint8Array.BYTES_PER_ELEMENT);
 let canvas_shared_buffer = new SharedArrayBuffer(7 * Int32Array.BYTES_PER_ELEMENT);
 let fs_shared_buffer     = new SharedArrayBuffer(4104 * Uint8Array.BYTES_PER_ELEMENT);
@@ -188,7 +194,7 @@ function change_keybindings(value) {
     persist_settings();
 }
 
-function change_ui_theme(value) {
+function change_ui_theme(value, options) {
     let elem = document.getElementById('ui-theme');
 
     if (value == null) {
@@ -205,7 +211,10 @@ function change_ui_theme(value) {
     $("meta[name='theme-color']").attr("content", $("body").css("background-color"))
 
     ui_theme = value;
-    persist_settings();
+
+    if (options && options.keepEditorTheme) return;
+
+    change_editor_theme(UI_THEME_EDITOR[value] || "one-dark");
 }
 
 function persist_settings() {
@@ -222,9 +231,13 @@ function load_settings() {
     ui_mode = localStorage["ui_mode"] || ui_mode;
 
     load_split_sizes();
-    change_editor_theme(editor_theme);
+    change_ui_theme(ui_theme, { keepEditorTheme: true });
+    if (editor_theme) {
+        change_editor_theme(editor_theme);
+    } else {
+        change_editor_theme(UI_THEME_EDITOR[ui_theme] || "one-dark");
+    }
     change_keybindings(editor_keybind_mode);
-    change_ui_theme(ui_theme);
     enable_ide_mode();
 }
 
@@ -312,7 +325,7 @@ async function request_permalink() {
         let res = await response.json();
         console.log(res);
         $("#permalink").html(`Permalink created: <a target="_blank" href="${res.url}">${res.url}</a>`);
-        $("#permalink + button").prop("disabled", "true");
+        $("#permalink").siblings("button").prop("disabled", "true");
     }
 }
 
