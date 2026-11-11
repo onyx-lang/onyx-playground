@@ -1,6 +1,6 @@
 const app_version = 7;
 
-const cacheName = 'cache-v5';
+const cacheName = 'cache-v6';
 const precacheResources = [
   '/playground',
   '/playground/static/css/index.css',

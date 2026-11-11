@@ -239,6 +239,7 @@ function load_settings() {
     }
     change_keybindings(editor_keybind_mode);
     enable_ide_mode();
+    load_pane_collapsed();
 }
 
 async function handle_drop(e) {
@@ -334,6 +335,18 @@ function load_split_sizes() {
 
     $root.css("--top-half-height", localStorage.getItem("top-half-height"));
     $root.css("--left-half-width", localStorage.getItem("left-half-width"));
+}
+
+function set_pane_collapsed(pane, collapsed) {
+    document.body.classList.toggle(pane + "-collapsed", collapsed);
+    localStorage.setItem("pane-" + pane + "-collapsed", collapsed ? "1" : "0");
+    if (editor && editor.editor) editor.editor.resize(true);
+}
+
+function load_pane_collapsed() {
+    for (const pane of ["folder", "canvas", "output"]) {
+        set_pane_collapsed(pane, localStorage.getItem("pane-" + pane + "-collapsed") === "1");
+    }
 }
 
 function save_split_sizes() {

@@ -25,6 +25,15 @@
     </head>
 
     <body id="body" class="ui-dark-theme">
+        <script>
+            try {
+                ["folder", "canvas", "output"].forEach(function (pane) {
+                    if (localStorage.getItem("pane-" + pane + "-collapsed") === "1") {
+                        document.body.classList.add(pane + "-collapsed");
+                    }
+                });
+            } catch (e) {}
+        </script>
         <div id="simple-menubar" class="menu-bar">
             <div class="toolbar">
                 <div class="toolbar-group">
@@ -43,6 +52,8 @@
         </div>
         
         <div id="folder-view">
+            <button type="button" class="pane-collapse icon-button" title="Collapse files" onclick="set_pane_collapsed('folder', true)"><i class="fas fa-chevron-left"></i></button>
+            <button type="button" class="pane-rail" title="Show files" onclick="set_pane_collapsed('folder', false)">Files</button>
             <div class="floating-container">
                 <div class="folder-root" ondragover="handle_dragover(event);" ondrop="folder_handle_drop(event);">
                 </div>
@@ -66,18 +77,26 @@
             <div id="code-horizontal-divider" class="divider"></div>
 
             <div class="right-half">
-                <div>
+                <div id="canvas-pane">
+                    <button type="button" class="pane-rail" title="Show canvas" onclick="set_pane_collapsed('canvas', false)">Canvas</button>
                     <div class="floating-container">
-                        <span class="section-label">Canvas</span>
+                        <div class="section-heading">
+                            <span class="section-label">Canvas</span>
+                            <button type="button" class="pane-collapse icon-button" title="Collapse canvas" onclick="set_pane_collapsed('canvas', true)"><i class="fas fa-chevron-up"></i></button>
+                        </div>
                         <canvas id="render-target"></canvas>
                     </div>
                 </div>
 
                 <div id="vertical-divider" class="divider"></div>
 
-                <div>
+                <div id="output-pane">
+                    <button type="button" class="pane-rail" title="Show output" onclick="set_pane_collapsed('output', false)">Output</button>
                     <div class="floating-container">
-                        <span class="section-label">Output</span>
+                        <div class="section-heading">
+                            <span class="section-label">Output</span>
+                            <button type="button" class="pane-collapse icon-button" title="Collapse output" onclick="set_pane_collapsed('output', true)"><i class="fas fa-chevron-down"></i></button>
+                        </div>
                         <pre id="code-result"></pre>
                         <input type="textbox" id="input-bar" class="hide" placeholder="Input" />
                     </div>
