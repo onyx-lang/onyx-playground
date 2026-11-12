@@ -77,15 +77,6 @@ Result.or_break :: macro (r: Result($O, $E)) -> O {
     }
 }
 
-#operator ?? macro (_r: Result($O, $E), code: Code) -> O {
-    switch __r := _r; __r {
-        case .Ok as o do return o
-        case .Err as e {
-            #unquote code(e)
-        }
-    }
-}
-
 @route.{.POST, "/compile"}
 compile_onyx :: (c: Context) {
     vars := c->bind(struct {

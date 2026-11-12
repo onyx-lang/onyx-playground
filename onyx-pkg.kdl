@@ -12,8 +12,8 @@ config {
 }
 
 dependencies {
-    otmp branch="nightly" git="http://github.com/onyx-lang/pkg-otmp" 
-    nimbus branch="nightly" git="http://github.com/brendanfh/nimbus" 
+    otmp branch="master" git="http://github.com/onyx-lang/pkg-otmp" 
+    nimbus branch="master" git="http://github.com/brendanfh/nimbus" 
 }
 
 build {
