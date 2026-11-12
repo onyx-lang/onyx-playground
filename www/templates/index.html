@@ -36,8 +36,9 @@
         </script>
         <div id="simple-menubar" class="menu-bar">
             <div class="toolbar">
-                <div class="toolbar-group">
-                    <button title="New Project" class="icon-button" onclick="folder_open_project_modal()"><i class="fas fa-project-diagram"></i></button>
+                <div class="toolbar-group brand">
+                    <img class="brand-logo" src="{% $endpoint %}/static/logo_256.png" alt="" />
+                    <span class="brand-name">Onyx</span>
                 </div>
                 <div class="toolbar-group">
                     <div class="run-control">
@@ -59,8 +60,14 @@
         </div>
         
         <div id="folder-view">
-            <button type="button" class="pane-collapse icon-button" title="Collapse files" onclick="set_pane_collapsed('folder', true)"><i class="fas fa-chevron-left"></i></button>
             <button type="button" class="pane-rail" title="Show files" onclick="set_pane_collapsed('folder', false)">Files</button>
+            <div class="folder-toolbar">
+                <button type="button" class="icon-button" title="Projects" onclick="folder_open_project_modal()"><i class="fas fa-project-diagram"></i></button>
+                <button type="button" class="icon-button" title="New file" onclick="folder_start_create('file')"><i class="fas fa-plus"></i></button>
+                <button type="button" class="icon-button" title="New folder" onclick="folder_start_create('directory')"><i class="fas fa-folder-plus"></i></button>
+                <span class="folder-toolbar-spacer"></span>
+                <button type="button" class="pane-collapse icon-button" title="Collapse files" onclick="set_pane_collapsed('folder', true)"><i class="fas fa-chevron-left"></i></button>
+            </div>
             <div class="floating-container">
                 <div class="folder-root" ondragover="handle_dragover(event);" ondrop="folder_handle_drop(event);">
                 </div>
@@ -142,6 +149,9 @@
                 <option value="tomorrow">Tomorrow</option>
                 <option value="tomorrow-night-bright">Tomorrow Night Bright</option>
             </select>
+
+            <label for="editor-font">Editor font:</label>
+            <input type="text" id="editor-font" name="editor-font" placeholder="Font name" spellcheck="false" onchange="change_editor_font()" />
 
             <label for="keybindings">Key bindings:</label>
             <select aria-label="Keybindings" name="keybindings" id="code-editor-keybindings" onchange="change_keybindings()">

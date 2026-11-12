@@ -561,7 +561,12 @@ function folder_start_create(type, event) {
     if (!$modal) return;
 
     $modal.find("input").val("").focus();
-    $modal.find(".create-base-path").html("/" + (event.target.parentNode.getAttribute("data-filename") ?? ""));
+    let base = "";
+    if (event) {
+        let menu = event.target.closest("#context-menu");
+        base = menu ? (menu.getAttribute("data-filename") || "") : "";
+    }
+    $modal.find(".create-base-path").text("/" + base);
     $modal.modal();
 }
 

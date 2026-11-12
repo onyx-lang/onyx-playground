@@ -8,6 +8,7 @@ class Editor {
 
         this.editor.setShowPrintMargin(false);
         this.editor.setFontSize(16);
+        this.setFontFamily("");
         this.editor.getSession().setMode("ace/mode/onyx");
         
         this.tabs = [];
@@ -56,6 +57,20 @@ class Editor {
 
         if (this.keybinds == "normal") this.editor.setKeyboardHandler("");
         else                           this.editor.setKeyboardHandler(`ace/keyboard/${this.keybinds}`);
+    }
+
+    setFontFamily(name) {
+        const fallback = "fira, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+        const trimmed = (name || "").trim().replace(/["\\;{}]/g, "");
+        const generic = ["serif", "sans-serif", "monospace", "cursive", "fantasy", "system-ui", "ui-monospace", "ui-serif", "ui-sans-serif"];
+        let family = fallback;
+        if (trimmed) {
+            const chosen = generic.includes(trimmed.toLowerCase()) ? trimmed.toLowerCase() : `"${trimmed}"`;
+            family = `${chosen}, ${fallback}`;
+        }
+        this.fontFamily = trimmed;
+        this.editor.setOption("fontFamily", family);
+        document.documentElement.style.setProperty("--editor-font-family", family);
     }
 
     _makeNewSession(contents, path) {
