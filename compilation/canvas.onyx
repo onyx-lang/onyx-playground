@@ -8,10 +8,10 @@ init  :: () -> void #foreign "canvas" "init" ---
 clear :: () -> void #foreign "canvas" "clear" ---
 sync  :: () -> void #foreign "canvas" "sync" ---
 
-get_size_internal :: (out_width: ^f32, out_height: ^f32) -> void #foreign "canvas" "get_size" ---
+get_size_internal :: (out_width: &f32, out_height: &f32) -> void #foreign "canvas" "get_size" ---
 get_size :: () -> (f32, f32) {
     sx, sy: f32;
-    get_size_internal(^sx, ^sy);
+    get_size_internal(&sx, &sy);
     return sx, sy;
 }
 
@@ -54,10 +54,10 @@ translate          :: (x: f32, y: f32) -> void #foreign "canvas" "translate" ---
 // Mouse interaction
 // This one does not wait for a click, and live updates.
 // Use '.sync'
-mouse_position_internal :: (out_x: ^f32, out_y: ^f32) -> void #foreign "canvas" "mouse_position" ---
+mouse_position_internal :: (out_x: &f32, out_y: &f32) -> void #foreign "canvas" "mouse_position" ---
 mouse_position :: () -> (f32, f32) {
     mx, my: f32;
-    mouse_position_internal(^mx, ^my);
+    mouse_position_internal(&mx, &my);
     return mx, my;
 }
 
@@ -66,9 +66,9 @@ mouse_down :: () -> bool #foreign "canvas" "mouse_down" ---
 
 // This one waits for a click event to happen, and returns the position
 // on the canvas where the click occurs.
-mouse_click_internal :: (out_x, out_y: ^f32) -> void #foreign "canvas" "mouse_get_click" ---
+mouse_click_internal :: (out_x, out_y: &f32) -> void #foreign "canvas" "mouse_get_click" ---
 mouse_click :: () -> (f32, f32) {
     mx, my: f32;
-    mouse_click_internal(^mx, ^my);
+    mouse_click_internal(&mx, &my);
     return mx, my;
 }

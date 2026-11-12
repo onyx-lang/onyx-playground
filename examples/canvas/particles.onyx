@@ -1,4 +1,4 @@
-// Falling particles. Right-click this file, choose Set as compilation target, then press Run.
+// Falling particles. Right-click this file and choose Run this file.
 
 use core {*}
 use canvas

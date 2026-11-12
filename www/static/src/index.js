@@ -159,12 +159,11 @@ async function kill_code() {
 }
 
 function update_running_msg() {
-    let elem = $('.run-button');
+    let icon = $("#run-button i");
     if (wasm_worker == null) {
-        elem.html("<i class='fas fa-play'></i>");
-
+        icon.attr("class", "fas fa-play");
     } else {
-        elem.html("<i class='fas fa-circle-notch fa-spin'></i>");
+        icon.attr("class", "fas fa-circle-notch fa-spin");
     }
 }
 
@@ -203,7 +202,7 @@ function change_ui_theme(value, options) {
         document.querySelector(`#ui-theme option[value="${value}"]`).selected = true;
     }
 
-    $("body").removeClass();
+    $("body").removeClass("ui-light-theme ui-blue-theme ui-dark-theme");
     if (value == "light") $("body").addClass("ui-light-theme");
     if (value == "blue")  $("body").addClass("ui-blue-theme");
     if (value == "dark")  $("body").addClass("ui-dark-theme");

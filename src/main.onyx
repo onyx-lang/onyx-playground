@@ -23,8 +23,8 @@ index :: (c: Context) {
 list_examples :: (c: Context) {
     use core.encoding.json
 
-    example_folder := os.path_join(ONYX_SOURCE_FOLDER, "worksheets")
-    names := Iterator.comp(os.list_directory(example_folder), [](str.temp_copy(it->name())))
+    example_folder := os.Path.join(ONYX_SOURCE_FOLDER, "worksheets")
+    names := Iterator.comp(os.Directory.list(example_folder), [](str.temp_copy(it->name())))
     names->sort(str.compare)
     for& names do it.count -= 5
 
@@ -56,15 +56,15 @@ run_compile_command :: (target: str, source_files: [] str, working_dir: str) -> 
 
     args->concat(source_files)
 
-    compile_process := os.process_spawn(
+    compile_process := os.Process.spawn(
         "onyx", args,
         starting_directory=working_dir
     )
 
-    compile_reader := io.reader_make(&compile_process)
+    compile_reader := io.Reader.make(&compile_process)
     compile_output := compile_reader->read_all()
 
-    switch os.process_wait(&compile_process) {
+    switch os.Process.wait(&compile_process) {
         case .Success do return .{ Ok = .{} }
         case .Error   do return .{ Err = compile_output }
     }
@@ -97,12 +97,12 @@ compile_onyx :: (c: Context) {
     use code_file := temp_file(".onyx")
 
     {
-        use code_file_handle := os.open(code_file.path, .Write) ?? [] {
+        use code_file_handle := os.File.open(code_file.path, .Write) ?? [] {
             c->no_content(500)
             return return
         }
 
-        io.stream_write(&code_file_handle, vars.code)
+        io.Stream.write(&code_file_handle, vars.code)
     }
     
     compile_result := run_compile_command(
@@ -132,22 +132,22 @@ compile_onyx_project :: (c: Context) {
     body := c->json_raw()?
 
     temp_directory_name := random.string(32, alpha_numeric=true)
-    temp_directory := os.path_join("compilation", temp_directory_name)
-    os.dir_create(temp_directory)
-    defer os.remove_directory(temp_directory)
+    temp_directory := os.Path.join("compilation", temp_directory_name)
+    os.Directory.create(temp_directory)
+    defer os.Directory.remove_recursive(temp_directory)
 
     build_project_dir :: (root: encoding.json.Value, current_dir: str) {
         for root->as_map_iter() {
-            path := os.path_join(current_dir, it.first)
+            path := os.Path.join(current_dir, it.first)
 
             switch it.second->type() {
                 case .String {
-                    use file := os.open(path, .Write)->or_break()
-                    io.stream_write(&file, it.second->as_str())
+                    use file := os.File.open(path, .Write)->or_break()
+                    io.Stream.write(&file, it.second->as_str())
                 }
 
                 case .Object {
-                    os.dir_create(path)
+                    os.Directory.create_all(path)
                     build_project_dir(it.second, path)
                 }
             }
@@ -167,7 +167,7 @@ compile_onyx_project :: (c: Context) {
     source_files << "../canvas.onyx"
     source_files << "../platform.onyx"
 
-    _, target := os.path_split(wasm_file.path)
+    _, target := os.Path.split(wasm_file.path)
     compile_result := run_compile_command(
         target = target,
         source_files = source_files,
@@ -231,7 +231,7 @@ manifest_json :: (c: Context) {
 //         out: [..] Elem
 
 //         for os.list_directory(d) {
-//             full_path := os.path_join(d, it->name())
+//             full_path := os.Path.join(d, it->name())
 //             if os.is_file(full_path) {
 //                 out << .{ tprintf(it->name()), "file", contents = os.get_contents(full_path) }
 //             }

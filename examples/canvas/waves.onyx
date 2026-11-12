@@ -1,4 +1,4 @@
-// Moving sine waves. Right-click this file, choose Set as compilation target, then press Run.
+// Moving sine waves. Right-click this file and choose Run this file.
 
 use core {*}
 use canvas

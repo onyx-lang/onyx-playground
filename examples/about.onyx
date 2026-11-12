@@ -3,8 +3,8 @@ use core {*}
 main :: () {
     println("Examples");
     println("");
-    println("Press Run to execute the file marked with the target icon.");
-    println("Right-click a file and choose Set as compilation target to run a different one.");
+    println("Press Run to start the file named beside the play button.");
+    println("The menu beside Run can run the open file, or set it as the startup file.");
     println("Animations keep going until you press Stop.");
     println("");
     println("hello.onyx             prints a greeting");

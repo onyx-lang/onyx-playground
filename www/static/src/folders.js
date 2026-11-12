@@ -156,6 +156,10 @@ class FolderSystem {
 
         if (existing == null) return false;
 
+        if (this.compilationTarget == old_path || this.compilationTarget.startsWith(old_path + "/")) {
+            this.compilationTarget = new_path + this.compilationTarget.slice(old_path.length);
+        }
+
         editor.closeTabByPath(old_path);
         this.remove(old_path);
 
@@ -215,7 +219,7 @@ class FolderSystem {
                     output += `<div class="folder-item file" data-filename="${name}" draggable="true">
                     <i class="fa ${icon}"></i>
                     ${t.name}
-                    ${name == this.compilationTarget ? "<i class='fa fa-bullseye'></i>" : ""}
+                    ${name == this.compilationTarget ? "<span class='startup-badge'>startup</span>" : ""}
                     </div>`;
                     break;
                 }
@@ -254,6 +258,31 @@ class FolderSystem {
         this.compilationTarget = project.compilationTarget;
         this.currentProject = project.name;
         editor.setTabState(project.editor, _get_contents_for_file);
+    }
+
+    list_files() {
+        let files = [];
+        let walk = (elems, prefix) => {
+            for (let elem of elems) {
+                let path = prefix ? prefix + "/" + elem.name : elem.name;
+                if (elem.type == "dir") walk(elem.elems || [], path);
+                else if (elem.type == "file") files.push(path);
+            }
+        };
+        walk(this.folders, "");
+        return files;
+    }
+
+    // A project with one file always starts there. A missing startup file is cleared
+    // when other files remain. Returns true when the stored file changed.
+    sync_startup_file() {
+        let files = this.list_files();
+        let next = this.compilationTarget;
+        if (files.length == 1) next = files[0];
+        else if (next && !files.includes(next)) next = "";
+        if (next == this.compilationTarget) return false;
+        this.compilationTarget = next;
+        return true;
     }
 
     save(project_name) {
@@ -392,7 +421,9 @@ function _get_contents_for_file(path) {
 }
 
 function folder_rebuild_view() {
+    if (folders.sync_startup_file()) folders.save();
     folders.build_folder_view();
+    folder_update_run_target();
 
     $(".folder-root").on("contextmenu", folder_context_menu(`
         <div onclick="folder_context_menu_close(); folder_start_create('file', event)">
@@ -408,9 +439,13 @@ function folder_rebuild_view() {
     $(".folder-item").on("click", folder_item_click);
 
     $(".folder-item.file").on("contextmenu", folder_context_menu(`
+        <div onclick="folder_context_menu_close(); folder_run_file_from_menu(event)">
+            <i class="fa fa-play"></i>
+            Run this file
+        </div>
         <div onclick="folder_context_menu_close(); folder_set_compilation_target(event)">
-            <i class="fa fa-bullseye"></i>
-            Set as compilation target
+            <i class="fa fa-bookmark"></i>
+            Set as startup file
         </div>
         <div onclick="folder_context_menu_close(); folder_start_rename(event)">
             <i class="fa fa-pencil"></i>
@@ -428,7 +463,7 @@ function folder_rebuild_view() {
             <i class="fa fa-trash"></i>
             Delete
         </div>
-    `, ($cm, e) => $cm.attr("data-filename", $(e.target).data("filename"))));
+    `, ($cm, e) => $cm.attr("data-filename", $(e.target).closest(".folder-item").data("filename"))));
 
     $(".folder-item.directory").on("contextmenu", folder_context_menu(`
         <div onclick="folder_context_menu_close(); folder_start_rename(event)">
@@ -447,7 +482,7 @@ function folder_rebuild_view() {
             <i class="fa fa-trash"></i>
             Delete
         </div>
-    `, ($cm, e) => $cm.attr("data-filename", $(e.target).data("filename"))));
+    `, ($cm, e) => $cm.attr("data-filename", $(e.target).closest(".folder-item").data("filename"))));
 }
 
 function folder_context_menu(menu_contents, attachData) {
@@ -481,7 +516,7 @@ function folder_context_menu_close() {
 }
 
 function folder_item_click(e) {
-    let $target = $(e.target);
+    let $target = $(e.target).closest(".folder-item");
 
     if ($target.hasClass("file")) {
         let filename = $target.attr("data-filename");
@@ -746,9 +781,74 @@ function folder_project_uploaded(ev) {
     }
 }
 
+function folder_menu_filename(e) {
+    return $(e.target).closest("#context-menu").attr("data-filename");
+}
+
 function folder_set_compilation_target(e) {
-    let filename = $(e.target).parent().attr("data-filename");
+    let filename = folder_menu_filename(e);
+    if (!filename) return;
     folders.compilationTarget = filename;
+    folders.save();
+    folder_rebuild_view();
+}
+
+function folder_run_file_from_menu(e) {
+    let filename = folder_menu_filename(e);
+    if (!filename) return;
+    folder_run(filename);
+}
+
+function folder_active_file_path() {
+    if (!editor || editor.selectedTab == null || editor.selectedTab < 0) return "";
+    if (!editor.tabs || editor.selectedTab >= editor.tabs.length) return "";
+    return editor.tabs[editor.selectedTab].path || "";
+}
+
+function folder_update_run_target() {
+    if (!folders) return;
+    let path = folders.compilationTarget || "";
+    let name = path ? path.substring(path.lastIndexOf("/") + 1) : "";
+    $("#run-target-name").text(name);
+    $("#run-button").attr("title", path ? "Run " + path : "Run");
+}
+
+function folder_close_run_menu() {
+    $("#run-menu").addClass("hidden");
+    $(document).off("click.run-menu");
+}
+
+function folder_toggle_run_menu(e) {
+    e.stopPropagation();
+    let $menu = $("#run-menu");
+    if (!$menu.hasClass("hidden")) {
+        folder_close_run_menu();
+        return;
+    }
+
+    let path = folder_active_file_path();
+    $menu.find("[data-needs-file]").prop("disabled", !path);
+    $menu.removeClass("hidden");
+    setTimeout(() => {
+        $(document).on("click.run-menu", (ev) => {
+            if ($(ev.target).closest("#run-menu, #run-menu-button").length) return;
+            folder_close_run_menu();
+        });
+    }, 0);
+}
+
+function folder_run_open_file() {
+    folder_close_run_menu();
+    let path = folder_active_file_path();
+    if (!path) return;
+    folder_run(path);
+}
+
+function folder_set_open_file_as_startup() {
+    folder_close_run_menu();
+    let path = folder_active_file_path();
+    if (!path) return;
+    folders.compilationTarget = path;
     folders.save();
     folder_rebuild_view();
 }
@@ -835,14 +935,24 @@ function _convert_folders_into_payload(root, output) {
     }
 }
 
-function folder_run() {
+function folder_run(path) {
+    if (typeof path != "string") path = "";
+    folder_close_run_menu();
+    if (folders.sync_startup_file()) {
+        folders.save();
+        folder_update_run_target();
+    }
+
+    let target = path || folders.compilationTarget;
+    if (!target) return;
+
     folder_save_all_files();
 
     submit_code(() => {
         let payload = {};
         
         payload.config = {
-            source_files: [folders.compilationTarget]
+            source_files: [target]
         };
 
         _convert_folders_into_payload({type: 'dir', name: 'files', elems: folders.folders}, payload);

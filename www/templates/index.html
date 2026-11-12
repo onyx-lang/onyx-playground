@@ -40,7 +40,14 @@
                     <button title="New Project" class="icon-button" onclick="folder_open_project_modal()"><i class="fas fa-project-diagram"></i></button>
                 </div>
                 <div class="toolbar-group">
-                    <button title="Run" class="icon-button icon-accent run-button" onclick="folder_run()"><i class="fas fa-play"></i></button>
+                    <div class="run-control">
+                        <button type="button" id="run-button" class="run-button" title="Run" onclick="folder_run()"><i class="fas fa-play"></i><span id="run-target-name"></span></button>
+                        <button type="button" id="run-menu-button" title="Run options" onclick="folder_toggle_run_menu(event)"><i class="fas fa-chevron-down"></i></button>
+                        <div id="run-menu" class="hidden">
+                            <button type="button" data-needs-file="true" onclick="folder_run_open_file()">Run open file</button>
+                            <button type="button" data-needs-file="true" onclick="folder_set_open_file_as_startup()">Set open file as startup</button>
+                        </div>
+                    </div>
                     <button title="Stop" class="icon-button icon-danger" onclick="kill_code()"><i class="fas fa-stop"></i></button>
                 </div>
                 <div class="toolbar-group">

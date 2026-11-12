@@ -200,6 +200,102 @@ select:focus-visible {
     color: var(--danger);
 }
 
+.run-control {
+    position: relative;
+    display: inline-flex;
+    align-items: stretch;
+    height: 28px;
+    border-radius: var(--radius);
+}
+
+.run-control:hover,
+.run-control:focus-within {
+    background: var(--hover);
+}
+
+#run-button,
+#run-menu-button {
+    display: inline-flex;
+    align-items: center;
+    height: 28px;
+    border: none;
+    background: transparent;
+    color: var(--fg);
+    font: inherit;
+    cursor: pointer;
+}
+
+#run-button {
+    gap: 6px;
+    padding: 0 4px 0 8px;
+    border-radius: var(--radius) 0 0 var(--radius);
+}
+
+#run-button i {
+    color: var(--accent);
+}
+
+#run-target-name {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+}
+
+#run-target-name:empty {
+    display: none;
+}
+
+#run-menu-button {
+    width: 22px;
+    justify-content: center;
+    color: var(--fg-muted);
+    border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+#run-button:focus-visible,
+#run-menu-button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
+#run-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    min-width: 220px;
+    padding: 4px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    z-index: 10000;
+}
+
+#run-menu button {
+    display: block;
+    width: 100%;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--fg);
+    font: inherit;
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+}
+
+#run-menu button:hover:not(:disabled) {
+    background: var(--hover);
+}
+
+#run-menu button:disabled {
+    color: var(--fg-muted);
+    cursor: default;
+}
+
 #folder-view {
     position: relative;
     width: calc(var(--folder-width) - var(--divider-size));
@@ -831,6 +927,15 @@ select:focus-visible {
     text-transform: uppercase;
     color: var(--fg-muted);
     padding: 10px 32px 6px 12px;
+}
+
+.startup-badge {
+    margin-left: 8px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--accent);
 }
 
 .hidden {

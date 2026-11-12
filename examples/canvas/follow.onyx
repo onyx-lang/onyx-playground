@@ -1,5 +1,5 @@
 // Move the mouse over the canvas. The blue circle eases toward the cursor.
-// Right-click this file, choose Set as compilation target, then press Run.
+// Right-click this file and choose Run this file.
 
 use core {*}
 use canvas

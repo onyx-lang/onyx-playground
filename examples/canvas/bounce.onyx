@@ -1,5 +1,5 @@
-// Press Run. This file is the compilation target.
-// Right-click any other example and choose Set as compilation target to run that one.
+// Press Run. This file is the startup file.
+// Right-click another example and choose Run this file to run that one instead.
 // Press Stop to end the animation.
 
 use core {*}

@@ -1,4 +1,4 @@
-// Right-click this file, choose Set as compilation target, then press Run.
+// Right-click this file and choose Run this file.
 // Type a guess in the input bar and press Enter.
 
 use core {*}
