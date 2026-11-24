@@ -23,6 +23,10 @@ build {
         source "src/main.onyx" 
         args "--stack-trace" 
     }
+
+    native "shell" {
+        run "onyx" "build-exe" "-o" "playground" "src/main"
+    }
 }
 
 lsp {

@@ -246,8 +246,8 @@ favicon :: (c: Context) {
 }
 
 
-setup_server :: () -> &Nimbus {
-    n := Nimbus.new() |> new()
+setup_server :: () -> Nimbus {
+    n := Nimbus.new()
     n->add(logger(style=.V2))
     n->add(c => {
         c->set_header("Cross-Origin-Embedder-Policy", "require-corp")
@@ -272,7 +272,10 @@ main :: () {
     random.set_seed(os.time())
     setup_templates()
 
-    server_port := conv.parse(u32, os.env("SERVER_PORT") ?? "4000") ?? 4000
+    server_port := 4000
+    if os.env("SERVER_PORT") as port {
+        server_port = conv.parse(u32, port) ?? 4000
+    }
 
     n := setup_server()
     n->serve(server_port, .{
